@@ -3,309 +3,540 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">The Interactive Guide to Image Resizing in Python</title>
+    <title>AI Knowledge Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Cool Neutral Tech -->
-    <!-- Application Structure Plan: A thematic, single-page application designed for discoverability. The structure flows from fundamentals to advanced topics. It starts with a hero section for context and navigation. 'The Fundamentals' section uses a comparison layout to clarify library differences. The core 'Interpolation Methods' section is an interactive dashboard with a master chart for high-level comparison and detailed tabs for deep dives, allowing users to control the information density. 'Scaling Direction' uses a side-by-side layout to contrast upscaling vs. downscaling. 'Advanced Methods' are presented as distinct cards to separate them from core techniques. This structure moves from broad concepts to specific details, guided by user interaction, making complex information digestible and non-linear. -->
-    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation -> Interaction -> Justification. 1. Interpolation Comparison -> Compare quality vs. speed -> Bar Chart (Chart.js) -> Static display -> Provides an immediate, high-level visual summary of the primary trade-off. 2. Interpolation Details -> Inform/Organize -> Tabbed content cards (HTML/Tailwind/JS) -> User clicks tabs -> Breaks down dense details into manageable, user-selected chunks, preventing information overload. 3. Library Differences -> Compare -> 3-column card layout (HTML/Tailwind) -> Static display -> Highlights the inconsistencies between libraries side-by-side for easy comparison. 4. Upscaling vs. Downscaling -> Compare/Inform -> 2-column layout (HTML/Tailwind) -> Static display -> Clearly contrasts the two concepts, their challenges, and best practices. All text is summarized from the report for clarity and scannability. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #1e293b; /* slate-800 */
             overflow-x: hidden; /* Prevent horizontal scroll due to potential canvas overflow */
         }
         #threejs-background {
-            position: fixed;
+            position: absolute; /* Changed from fixed to absolute for better scroll behavior within header */
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1; /* Place it behind all content */
-            pointer-events: none; /* Allow clicks to pass through to elements below */
-            opacity: 0.8; /* Subtle transparency */
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.8;
         }
-        .chart-container {
+      .tab-active {
+            background-color: #0f766e; /* teal-700 */
+            color: white;
+        }
+      .tab-inactive {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #475569; /* slate-600 */
+        }
+      .content-highlight {
+            background-color: #99f6e4; /* teal-200 */
+            transition: background-color 0.3s ease-in-out;
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+      .chart-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             margin-left: auto;
             margin-right: auto;
-            height: 350px;
-            max-height: 50vh;
+            height: 400px;
+            max-height: 70vh;
         }
         @media (min-width: 768px) {
-            .chart-container {
-                height: 450px;
+          .chart-container {
+                height: 600px;
             }
         }
-        .tab-active {
+      .section-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-position 0.3s ease-out;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); /* Subtle default gradient */
+            background-size: 200% 200%; /* Make gradient larger than element */
+            background-position: 0% 0%; /* Initial position */
+        }
+      .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            background-position: 100% 100%; /* Shift gradient on hover */
+            background-image: linear-gradient(135deg, #e0f2f7 0%, #b2ebf2 100%); /* Lighter, more vibrant gradient on hover */
+        }
+      .gemini-sparkle {
+            position: absolute;
+            width: 1.5rem;
+            height: 1.5rem;
+            background-image: linear-gradient(135deg, #4285F4, #9B72F9, #F4B400, #0F9D58);
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: sparkle-animation 1.5s infinite ease-in-out;
+        }
+        @keyframes sparkle-animation {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.5); opacity: 1; }
+        }
+
+        /* Styles for the Image Resizing Guide section */
+        #image-resizing-guide-container .ir-section-title { /* Corrected selector */
+            text-align: center;
+            font-size: 2.25rem; /* 3xl */
+            font-weight: 700; /* bold */
+            color: #1e293b; /* slate-900 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        #image-resizing-guide-container .ir-section-description { /* Corrected selector */
+            text-align: center;
+            font-size: 1.125rem; /* lg */
+            color: #475569; /* slate-600 */
+            max-width: 48rem; /* max-w-3xl */
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 3rem; /* mb-12 */
+        }
+        #image-resizing-guide-container .ir-card { /* Corrected selector */
+            background-color: #ffffff; /* white */
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+            border: 1px solid #f1f5f9; /* border border-slate-100 */
+        }
+        #image-resizing-guide-container .ir-card-title { /* Corrected selector */
+            font-size: 1.25rem; /* xl */
+            font-weight: 600; /* semibold */
+            color: #1e293b; /* slate-800 */
+            margin-bottom: 0.75rem; /* mb-3 */
+        }
+        #image-resizing-guide-container .ir-paragraph { /* Corrected selector */
+            color: #475569; /* slate-600 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        #image-resizing-guide-container .ir-note { /* Corrected selector */
+            background-color: #fffbeb; /* amber-50 */
+            border-left: 4px solid #fbbf24; /* border-amber-400 */
+            padding: 1rem; /* p-4 */
+            border-radius: 0.5rem; /* rounded-r-lg */
+        }
+        #image-resizing-guide-container .ir-note-title { /* Corrected selector */
+            font-weight: 700; /* bold */
+            color: #78350f; /* amber-900 */
+        }
+        #image-resizing-guide-container .ir-note-description { /* Corrected selector */
+            color: #92400e; /* amber-800 */
+            font-size: 0.875rem; /* text-sm */
+        }
+        #image-resizing-guide-container .ir-grid-item { /* Corrected selector */
+            padding: 0.75rem; /* p-3 */
+            background-color: #f1f5f9; /* slate-100 */
+            border-radius: 0.5rem; /* rounded-lg */
+            text-align: center;
+        }
+        #image-resizing-guide-container .ir-grid-item-title { /* Corrected selector */
+            font-weight: 700; /* bold */
+            color: #475569; /* slate-700 */
+        }
+        #image-resizing-guide-container .ir-grid-item-description { /* Corrected selector */
+            color: #475569; /* slate-600 */
+            margin-top: 0.25rem; /* mt-1 */
+        }
+        #image-resizing-guide-container .ir-tab-button { /* Corrected selector */
+             white-space: nowrap;
+            padding: 0.75rem 0.75rem; /* py-3 px-3 */
+            border-bottom-width: 2px;
+            font-weight: 500; /* medium */
+            font-size: 0.875rem; /* text-sm */
+            border-top-left-radius: 0.5rem; /* rounded-t-lg */
+            border-top-right-radius: 0.5rem;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 200ms;
+        }
+        #image-resizing-guide-container .ir-tab-active { /* Corrected selector */
             border-color: #3b82f6; /* blue-500 */
             background-color: #eff6ff; /* blue-50 */
             color: #1e3a8a; /* blue-900 */
         }
-        .tab-inactive {
+        #image-resizing-guide-container .ir-tab-inactive { /* Corrected selector */
             border-color: transparent;
             background-color: #f3f4f6; /* gray-100 */
             color: #4b5563; /* gray-600 */
         }
-        .section-fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        #image-resizing-guide-container .ir-list-item { /* Corrected selector */
+            display: flex;
+            align-items: flex-start;
         }
-        .section-fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        #image-resizing-guide-container .ir-list-icon-green { /* Corrected selector */
+            color: #22c55e; /* green-500 */
+            margin-right: 0.5rem; /* mr-2 */
+            margin-top: 0.25rem; /* mt-1 */
         }
-        /* Ensure content layers are above the 3D background */
-        header, main, footer {
-            position: relative;
-            z-index: 1;
+        #image-resizing-guide-container .ir-list-icon-red { /* Corrected selector */
+            color: #ef4444; /* red-500 */
+            margin-right: 0.5rem; /* mr-2 */
+            margin-top: 0.25rem; /* mt-1 */
+        }
+        #image-resizing-guide-container .ir-code-snippet { /* Corrected selector */
+            font-family: monospace;
+            background-color: #e2e8f0; /* slate-200 */
+            padding: 0.125rem 0.25rem; /* px-1 py-0.5 */
+            border-radius: 0.25rem; /* rounded */
+        }
+        #image-resizing-guide-container .ir-strong { /* Corrected selector */
+            font-weight: 600; /* semibold */
+            color: #1e293b; /* slate-800 */
+        }
+         #image-resizing-guide-container .ir-red-text { /* Corrected selector */
+            color: #b91c1c; /* red-700 */
+        }
+        #image-resizing-guide-container .ir-green-text { /* Corrected selector */
+            color: #15803d; /* green-700 */
+        }
+        #image-resizing-guide-container .ir-mono-red { /* Corrected selector */
+            font-family: monospace;
+            color: #dc2626; /* rose-600 */
+            background-color: #fef2f2; /* rose-50 */
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        #image-resizing-guide-container .ir-pill-blue { /* Corrected selector */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600; /* semibold */
+            color: #2563eb; /* blue-600 */
+            background-color: #eff6ff; /* blue-100 */
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            border-radius: 9999px; /* rounded-full */
+        }
+        #image-resizing-guide-container .ir-pill-purple { /* Corrected selector */
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #7e22ce; /* purple-700 */
+            background-color: #f3e8ff; /* purple-100 */
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            border-radius: 9999px;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="antialiased">
 
-    <div id="threejs-background"></div>
-
-    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-slate-900" data-i18n="header_title">Python Image Resizing</h1>
-            <div class="hidden md:flex space-x-6 text-sm font-medium">
-                <a href="#fundamentals" class="text-slate-600 hover:text-blue-600 transition-colors" data-i18n="nav_fundamentals">Fundamentals</a>
-                <a href="#interpolation" class="text-slate-600 hover:text-blue-600 transition-colors" data-i18n="nav_interpolation">Interpolation</a>
-                <a href="#direction" class="text-slate-600 hover:text-blue-600 transition-colors" data-i18n="nav_scaling_direction">Scaling Direction</a>
-                <a href="#advanced" class="text-slate-600 hover:text-blue-600 transition-colors" data-i18n="nav_advanced">Advanced</a>
+    <header class="relative bg-slate-800 text-white py-20 md:py-32 overflow-hidden">
+        <div id="threejs-background" class="absolute top-0 left-0 w-full h-full z-0"></div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <div class="gemini-sparkle" style="top: 20%; left: 15%;"></div>
+            <div class="gemini-sparkle" style="top: 30%; right: 20%; animation-delay: -0.5s;"></div>
+            <div class="gemini-sparkle" style="bottom: 25%; left: 25%; animation-delay: -1s;"></div>
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">Explore the World of AI</h1>
+            <p class="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10">
+                An interactive guide to the core concepts, special topics, and intricate relationships within Artificial Intelligence. Start by searching or scroll to discover.
+            </p>
+            <div class="max-w-2xl mx-auto">
+                <div class="relative">
+                    <input type="text" id="ai-search-bar" placeholder="Ask Gemini about AI (e.g., 'What is Reinforcement Learning?')" class="w-full py-4 px-6 pr-12 rounded-full bg-slate-700 text-white placeholder-slate-400 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 transition">
+                    <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </span>
+                </div>
+                <div id="search-results-count" class="text-sm text-slate-400 mt-3 h-5"></div>
             </div>
-            <div class="flex items-center space-x-4">
-                <select id="language-selector" class="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
+            <div class="flex justify-center mt-8">
+                <select id="language-selector" class="bg-slate-700 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
                     <option value="en">English</option>
                     <option value="es">Español</option>
                     <option value="fr">Français</option>
                     <option value="ar">العربية</option>
                 </select>
-                <div class="md:hidden">
-                    <select id="mobile-nav" class="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
-                        <option data-i18n="nav_placeholder">Navigate...</option>
-                        <option value="#fundamentals" data-i18n="nav_fundamentals">Fundamentals</option>
-                        <option value="#interpolation" data-i18n="nav_interpolation">Interpolation</option>
-                        <option value="#direction" data-i18n="nav_scaling_direction">Scaling Direction</option>
-                        <option value="#advanced" data-i18n="nav_advanced">Advanced</option>
-                    </select>
-                </div>
             </div>
-        </nav>
+        </div>
     </header>
 
-    <main class="container mx-auto px-6 py-8 md:py-16">
-
-        <section class="text-center mb-16 md:mb-24 section-fade-in">
-            <h2 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4" data-i18n="hero_title">Mastering Image Resizing</h2>
-            <p class="max-w-3xl mx-auto text-lg text-slate-600" data-i18n="hero_description">
-                An interactive guide to the methods, trade-offs, and libraries for resizing images in Python. Move beyond simple scaling and learn to choose the right technique for optimal quality and performance.
-            </p>
-        </section>
-
-        <section id="fundamentals" class="mb-16 md:mb-24 section-fade-in">
-            <div class="text-center mb-12">
-                <h3 class="text-3xl font-bold text-slate-900" data-i18n="fundamentals_section_title">The Fundamentals</h3>
-                <p class="text-md text-slate-500 mt-2" data-i18n="fundamentals_section_description">Before diving into code, it's crucial to understand the core concepts and the primary tools available. This section covers the 'what' and 'why' of resizing and introduces the key Python libraries you'll encounter.
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8 items-start">
-                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
-                    <h4 class="text-xl font-semibold text-slate-800 mb-3" data-i18n="why_resize_title">Why Resize? The Core Concepts</h4>
-                    <p class="text-slate-600 mb-4" data-i18n="why_resize_description">Image resizing is the process of changing an image's dimensions. It's a fundamental task driven by two main goals: optimizing performance (e.g., smaller files for websites) and preparing data (e.g., standardizing sizes for machine learning models).</p>
-                    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
-                        <h5 class="font-bold text-amber-900" data-i18n="aspect_ratio_rule_title">The Golden Rule: Aspect Ratio</h5>
-                        <p class="text-amber-800 text-sm" data-i18n="aspect_ratio_rule_description">Preserving the aspect ratio (the proportional relationship between width and height) is paramount. Stretching or squashing an image by ignoring its original proportions leads to distortion. The first decision in any resize operation is whether to maintain this ratio.</p>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
-                     <h4 class="text-xl font-semibold text-slate-800 mb-3" data-i18n="python_toolbox_title">The Python Toolbox</h4>
-                    <p class="text-slate-600 mb-4" data-i18n="python_toolbox_description">Python's ecosystem offers several powerful libraries for image manipulation. While they achieve similar goals, their APIs and default behaviors differ significantly, requiring careful attention.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-sm">
-                        <div class="p-3 bg-slate-100 rounded-lg">
-                            <h5 class="font-bold text-slate-700" data-i18n="pillow_title">Pillow (PIL Fork)</h5>
-                            <p class="text-slate-600 mt-1" data-i18n="pillow_description">A user-friendly, general-purpose library. Its `resize()` method can distort aspect ratio, while `thumbnail()` preserves it.</p>
-                        </div>
-                        <div class="p-3 bg-slate-100 rounded-lg">
-                            <h5 class="font-bold text-slate-700" data-i18n="opencv_title">OpenCV</h5>
-                             <p class="text-slate-600 mt-1" data-i18n="opencv_description">A computer vision powerhouse. Its `cv2.resize()` is versatile but requires careful handling of parameters to maintain aspect ratio.</p>
-                        </div>
-                        <div class="p-3 bg-slate-100 rounded-lg">
-                            <h5 class="font-bold text-slate-700" data-i18n="scikit_image_title">Scikit-image</h5>
-                             <p class="text-slate-600 mt-1" data-i18n="scikit_image_description">Built for scientific analysis, it offers robust resizing with explicit anti-aliasing controls crucial for quality downsampling.</p>
-                        </div>
-                    </div>
-                </div>
+    <main class="container mx-auto px-6 py-12 md:py-20">
+        
+        <section id="core-modules-section" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4">AI Core Modules</h2>
+            <p class="text-slate-600 text-lg text-center max-w-3xl mx-auto mb-12">These are the foundational building blocks and theoretical underpinnings of AI. Click on any module to explore its key concepts and see how it relates to other fields. This is your starting point for understanding how AI systems think, learn, and act.</p>
+            <div id="core-modules-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
         </section>
 
-        <section id="interpolation" class="mb-16 md:mb-24 section-fade-in">
-             <div class="text-center mb-12">
-                <h3 class="text-3xl font-bold text-slate-900" data-i18n="interpolation_section_title">The Core Technique: Interpolation</h3>
-                <p class="text-md text-slate-500 mt-2" data-i18n="interpolation_section_description">Interpolation is the mathematical heart of resizing—it's how new pixel values are estimated. The method you choose directly impacts the final image's quality, speed of processing, and the visual artifacts produced. There is no single "best" method; it's always a trade-off.
-                </p>
+        <section id="special-topics-section" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4">AI Special Topic Pillars</h2>
+            <p class="text-slate-600 text-lg text-center max-w-3xl mx-auto mb-12">Beyond the core, these pillars represent interdisciplinary, advanced, or application-specific areas where AI is making a significant impact. Explore these topics to see AI in action across society, industry, and research frontiers.</p>
+            <div id="special-topics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+
+        <section id="practical-guides-section" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4">Practical AI Guides</h2>
+            <p class="text-slate-600 text-lg text-center max-w-3xl mx-auto mb-12">Dive into specific AI applications and techniques with our detailed, interactive guides. Learn practical implementations and best practices for real-world scenarios.</p>
+            <div id="practical-guides-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+
+        <section id="detail-view-section" class="mb-20 bg-white p-8 rounded-2xl shadow-lg border border-slate-200 scroll-mt-20 hidden">
+            <div class="flex justify-between items-start">
+                 <h3 id="detail-title" class="text-3xl font-bold mb-4"></h3>
+                 <button id="close-detail-view" class="text-slate-500 hover:text-slate-800">&times;</button>
+            </div>
+            <p id="detail-description" class="text-slate-600 mb-6"></p>
+            <div id="detail-content" class="prose max-w-none"></div>
+        </section>
+
+        <section id="image-resizing-guide-container" class="mb-20 bg-white p-8 rounded-2xl shadow-lg border border-slate-200 scroll-mt-20 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="ir-section-title text-3xl font-bold text-slate-900" data-i18n="image_resizing_full_guide_title">Interactive Guide: Image Resizing in Python</h3>
+                <button id="close-image-resizing-guide" class="text-slate-500 hover:text-slate-800 text-3xl font-bold">&times;</button>
             </div>
             
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mb-8">
-                 <h4 class="text-xl font-semibold text-center text-slate-800 mb-4" data-i18n="comparison_chart_title">Comparing Methods: Quality vs. Speed</h4>
+            <div id="image-resizing-content">
+                <section class="text-center mb-16 md:mb-24">
+                    <p class="ir-section-description" data-i18n="hero_description">
+                        An interactive guide to the methods, trade-offs, and libraries for resizing images in Python. Move beyond simple scaling and learn to choose the right technique for optimal quality and performance.
+                    </p>
+                </section>
+
+                <section id="fundamentals" class="mb-16 md:mb-24">
+                    <div class="text-center mb-12">
+                        <h3 class="ir-section-title" data-i18n="fundamentals_section_title">The Fundamentals</h3>
+                        <p class="ir-section-description" data-i18n="fundamentals_section_description">Before diving into code, it's crucial to understand the core concepts and the primary tools available. This section covers the 'what' and 'why' of resizing and introduces the key Python libraries you'll encounter.
+                        </p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div class="ir-card">
+                            <h4 class="ir-card-title" data-i18n="why_resize_title">Why Resize? The Core Concepts</h4>
+                            <p class="ir-paragraph" data-i18n="why_resize_description">Image resizing is the process of changing an image's dimensions.[1, 2] It's a fundamental task driven by two main goals: optimizing performance (e.g., smaller files for websites) and preparing data (e.g., standardizing sizes for machine learning models).[2]</p>
+                            <div class="ir-note">
+                                <h5 class="ir-note-title" data-i18n="aspect_ratio_rule_title">The Golden Rule: Aspect Ratio</h5>
+                                <p class="ir-note-description" data-i18n="aspect_ratio_rule_description">Preserving the aspect ratio (the proportional relationship between width and height) is paramount.[1] Stretching or squashing an image by ignoring its original proportions leads to distortion.[1] The first decision in any resize operation is whether to maintain this ratio.</p>
+                            </div>
+                        </div>
+                        <div class="ir-card">
+                             <h4 class="ir-card-title" data-i18n="python_toolbox_title">The Python Toolbox</h4>
+                            <p class="ir-paragraph" data-i18n="python_toolbox_description">Python's ecosystem offers several powerful libraries for image manipulation. While they achieve similar goals, their APIs and default behaviors differ significantly, requiring careful attention.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-sm">
+                                <div class="ir-grid-item">
+                                    <h5 class="ir-grid-item-title" data-i18n="pillow_title">Pillow (PIL Fork)</h5>
+                                    <p class="ir-grid-item-description" data-i18n="pillow_description">A user-friendly, general-purpose library. Its <span class="ir-code-snippet">resize()</span> method can distort aspect ratio, while <span class="ir-code-snippet">thumbnail()</span> preserves it.[1, 3]</p>
+                                </div>
+                                <div class="ir-grid-item">
+                                    <h5 class="ir-grid-item-title" data-i18n="opencv_title">OpenCV</h5>
+                                     <p class="ir-grid-item-description" data-i18n="opencv_description">A computer vision powerhouse. Its <span class="ir-code-snippet">cv2.resize()</span> is versatile but requires careful handling of parameters to maintain aspect ratio.[1, 2, 4]</p>
+                                </div>
+                                <div class="ir-grid-item">
+                                    <h5 class="ir-grid-item-title" data-i18n="scikit_image_title">Scikit-image</h5>
+                                     <p class="ir-grid-item-description" data-i18n="scikit_image_description">Built for scientific analysis, it offers robust resizing with explicit anti-aliasing controls crucial for quality downsampling.[5, 6]</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="interpolation" class="mb-16 md:mb-24">
+                     <div class="text-center mb-12">
+                        <h3 class="ir-section-title" data-i18n="interpolation_section_title">The Core Technique: Interpolation</h3>
+                        <p class="ir-section-description" data-i18n="interpolation_section_description">Interpolation is the mathematical heart of resizing—it's how new pixel values are estimated.[7, 8] The method you choose directly impacts the final image's quality, speed of processing, and the visual artifacts produced. There is no single "best" method; it's always a trade-off.
+                        </p>
+                    </div>
+                    
+                    <div class="ir-card mb-8">
+                         <h4 class="ir-card-title text-center" data-i18n="comparison_chart_title">Comparing Methods: Quality vs. Speed</h4>
+                        <div class="chart-container">
+                            <canvas id="interpolationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div id="ir-tabs-container">
+                        <div class="border-b border-gray-200 mb-6">
+                            <nav class="-mb-px flex space-x-2 sm:space-x-4" aria-label="Tabs">
+                                <button class="ir-tab-button ir-tab-inactive" data-tab="nearest" data-i18n="tab_nearest">Nearest Neighbor</button>
+                                <button class="ir-tab-button ir-tab-inactive" data-tab="bilinear" data-i18n="tab_bilinear">Bilinear</button>
+                                <button class="ir-tab-button ir-tab-inactive" data-tab="bicubic" data-i18n="tab_bicubic">Bicubic</button>
+                                <button class="ir-tab-button ir-tab-inactive" data-tab="lanczos" data-i18n="tab_lanczos">Lanczos</button>
+                                <button class="ir-tab-button ir-tab-inactive" data-tab="area" data-i18n="tab_area">Area</button>
+                            </nav>
+                        </div>
+
+                        <div id="ir-tab-content" class="ir-card">
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="direction" class="mb-16 md:mb-24">
+                    <div class="text-center mb-12">
+                        <h3 class="ir-section-title" data-i18n="scaling_direction_section_title">Scaling Direction Matters</h3>
+                        <p class="ir-section-description" data-i18n="scaling_direction_section_description">The challenges and best practices for resizing an image are fundamentally different depending on whether you are making it smaller (downscaling) or larger (upscaling). Choosing the right interpolation method for the job is critical for achieving high-quality results.</p>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="ir-card">
+                            <h4 class="ir-card-title ir-red-text mb-3" data-i18n="downscaling_title">▼ Downscaling (Shrinking)</h4>
+                            <p class="ir-paragraph" data-i18n="downscaling_description">Downscaling throws away pixel information.[1] The main challenge is to do this gracefully without introducing ugly artifacts. The key is <strong class="ir-strong" data-i18n="anti_aliasing_bold">anti-aliasing</strong>, a process of pre-smoothing the image before removing pixels to prevent jagged edges and moiré patterns.[5]</p>
+                            <div class="mt-4">
+                                <h5 class="ir-strong mb-2" data-i18n="downscaling_recommended_title">Recommended Methods:</h5>
+                                <ul class="list-disc list-inside space-y-1 ir-paragraph">
+                                    <li><strong class="ir-strong" data-i18n="downscaling_area_method">Area (<span class="ir-code-snippet">cv2.INTER_AREA</span>):</strong> <span data-i18n="downscaling_area_desc">The gold standard. Averages pixel values over an area, producing clean, sharp results with minimal artifacts.[1, 9, 10]</span></li>
+                                    <li><strong class="ir-strong" data-i18n="downscaling_lanczos_bicubic_method">Lanczos/Bicubic with Anti-Aliasing:</strong> <span data-i18n="downscaling_lanczos_bicubic_desc">High-quality interpolators, when paired with an anti-aliasing filter (like in Pillow or Scikit-image), also yield excellent results.[1, 5]</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                         <div class="ir-card">
+                            <h4 class="ir-card-title ir-green-text mb-3" data-i18n="upscaling_title">▲ Upscaling (Enlarging)</h4>
+                            <p class="ir-paragraph" data-i18n="upscaling_description">Upscaling creates new pixels through estimation.[4] Crucially, traditional methods <strong class="ir-strong" data-i18n="cannot_create_info_bold">cannot create new information</strong>; they can only guess what should go between existing pixels.[1] This sets a quality ceiling and can lead to blurriness or pixelation if overdone.[1, 4]</p>
+                             <div class="mt-4">
+                                <h5 class="ir-strong mb-2" data-i18n="upscaling_recommended_title">Recommended Methods:</h5>
+                                <ul class="list-disc list-inside space-y-1 ir-paragraph">
+                                    <li><strong class="ir-strong" data-i18n="upscaling_bicubic_method">Bicubic (<span class="ir-code-snippet">cv2.INTER_CUBIC</span>):</strong> <span data-i18n="upscaling_bicubic_desc">A great balance of quality and performance. It considers 16 surrounding pixels to produce sharper results than Bilinear.[1, 11, 12]</span></li>
+                                    <li><strong class="ir-strong" data-i18n="upscaling_lanczos_method">Lanczos (<span class="ir-code-snippet">cv2.INTER_LANCZOS4</span>):</strong> <span data-i18n="upscaling_lanczos_desc">Often provides the highest quality for upscaling, preserving fine details exceptionally well, but is computationally more expensive.[1, 9, 13, 14]</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="advanced">
+                     <div class="text-center mb-12">
+                        <h3 class="ir-section-title" data-i18n="advanced_section_title">Beyond Interpolation: Advanced Techniques</h3>
+                        <p class="ir-section-description" data-i18n="advanced_section_description">When traditional methods hit their quality limits, advanced, content-aware techniques offer a path forward. These methods analyze the image's content to perform more intelligent resizing, especially for complex or quality-critical scenarios.</p>
+                    </div>
+                     <div class="grid md:grid-cols-2 gap-8">
+                        <div class="ir-card flex flex-col">
+                            <h4 class="ir-card-title" data-i18n="seam_carving_title">Content-Aware Resizing (Seam Carving)</h4>
+                            <p class="ir-paragraph flex-grow" data-i18n="seam_carving_description">Instead of scaling uniformly, this technique identifies and removes or duplicates "seams" of the least important pixels.[15, 16] It resizes the image non-uniformly, protecting important objects from distortion. This is ideal for changing an image's aspect ratio without squashing the main subject.[15]</p>
+                            <div class="mt-auto pt-4 border-t border-slate-200">
+                                <span class="ir-pill-blue" data-i18n="seam_carving_use_case">Use Case: Aspect ratio change while preserving subjects</span>
+                            </div>
+                        </div>
+                         <div class="ir-card flex flex-col">
+                            <h4 class="ir-card-title" data-i18n="super_resolution_title">Super-Resolution (Deep Learning)</h4>
+                            <p class="ir-paragraph flex-grow" data-i18n="super_resolution_description">This is the modern solution to the upscaling problem. Instead of just interpolating, deep learning models are trained to "hallucinate" plausible high-frequency details.[17] They genuinely add new, realistic information, resulting in dramatically sharper and more detailed enlargements than any traditional method can achieve.[17, 18]</p>
+                            <div class="mt-auto pt-4 border-t border-slate-200">
+                                <span class="ir-pill-purple" data-i18n="super_resolution_use_case">Use Case: High-quality, large-scale image enlargement</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+
+        <section id="taxonomy-explorer" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-4">Interactive AI Taxonomy Explorer</h2>
+            <p class="text-slate-600 text-lg text-center max-w-3xl mx-auto mb-12">This interactive chart visualizes the entire AI landscape based on the report's taxonomy. Each bubble is a field of study. Click on a bubble to highlight its direct connections and learn more. Hover to see a brief definition. This is a tool for you to freely explore the vast and interconnected world of AI.</p>
+            <div class="bg-white p-4 md:p-8 rounded-2xl shadow-lg border border-slate-200">
                 <div class="chart-container">
-                    <canvas id="interpolationChart"></canvas>
+                    <canvas id="aiTaxonomyChart"></canvas>
                 </div>
-            </div>
-
-            <div id="tabs-container">
-                <div class="border-b border-gray-200 mb-6">
-                    <nav class="-mb-px flex space-x-2 sm:space-x-4" aria-label="Tabs">
-                        <button class="tab whitespace-nowrap py-3 px-3 sm:px-4 border-b-2 font-medium text-sm rounded-t-lg transition-colors duration-200" data-tab="nearest" data-i18n="tab_nearest">Nearest Neighbor</button>
-                        <button class="tab whitespace-nowrap py-3 px-3 sm:px-4 border-b-2 font-medium text-sm rounded-t-lg transition-colors duration-200" data-tab="bilinear" data-i18n="tab_bilinear">Bilinear</button>
-                        <button class="tab whitespace-nowrap py-3 px-3 sm:px-4 border-b-2 font-medium text-sm rounded-t-lg transition-colors duration-200" data-tab="bicubic" data-i18n="tab_bicubic">Bicubic</button>
-                        <button class="tab whitespace-nowrap py-3 px-3 sm:px-4 border-b-2 font-medium text-sm rounded-t-lg transition-colors duration-200" data-tab="lanczos" data-i18n="tab_lanczos">Lanczos</button>
-                        <button class="tab whitespace-nowrap py-3 px-3 sm:px-4 border-b-2 font-medium text-sm rounded-t-lg transition-colors duration-200" data-tab="area" data-i18n="tab_area">Area</button>
-                    </nav>
-                </div>
-
-                <div id="tab-content" class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
-                </div>
-            </div>
-        </section>
-        
-        <section id="direction" class="mb-16 md:mb-24 section-fade-in">
-            <div class="text-center mb-12">
-                <h3 class="text-3xl font-bold text-slate-900" data-i18n="scaling_direction_section_title">Scaling Direction Matters</h3>
-                <p class="text-md text-slate-500 mt-2" data-i18n="scaling_direction_section_description">The challenges and best practices for resizing an image are fundamentally different depending on whether you are making it smaller (downscaling) or larger (upscaling). Choosing the right interpolation method for the job is critical for achieving high-quality results.</p>
-            </div>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
-                    <h4 class="text-2xl font-bold text-red-700 mb-3" data-i18n="downscaling_title">▼ Downscaling (Shrinking)</h4>
-                    <p class="text-slate-600 mb-4" data-i18n="downscaling_description">Downscaling throws away pixel information. The main challenge is to do this gracefully without introducing ugly artifacts. The key is <strong class="font-semibold text-slate-800" data-i18n="anti_aliasing_bold">anti-aliasing</strong>, a process of pre-smoothing the image before removing pixels to prevent jagged edges and moiré patterns.</p>
-                    <div class="mt-4">
-                        <h5 class="font-semibold text-slate-800 mb-2" data-i18n="downscaling_recommended_title">Recommended Methods:</h5>
-                        <ul class="list-disc list-inside space-y-1 text-slate-600">
-                            <li><strong class="text-slate-700" data-i18n="downscaling_area_method">Area (`cv2.INTER_AREA`):</strong> <span data-i18n="downscaling_area_desc">The gold standard. Averages pixel values over an area, producing clean, sharp results with minimal artifacts.</span></li>
-                            <li><strong class="text-slate-700" data-i18n="downscaling_lanczos_bicubic_method">Lanczos/Bicubic with Anti-Aliasing:</strong> <span data-i18n="downscaling_lanczos_bicubic_desc">High-quality interpolators, when paired with an anti-aliasing filter (like in Pillow or Scikit-image), also yield excellent results.</span></li>
-                        </ul>
-                    </div>
-                </div>
-                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100">
-                    <h4 class="text-2xl font-bold text-green-700 mb-3" data-i18n="upscaling_title">▲ Upscaling (Enlarging)</h4>
-                    <p class="text-slate-600 mb-4" data-i18n="upscaling_description">Upscaling creates new pixels through estimation. Crucially, traditional methods <strong class="font-semibold text-slate-800" data-i18n="cannot_create_info_bold">cannot create new information</strong>; they can only guess what should go between existing pixels. This sets a quality ceiling and can lead to blurriness or pixelation if overdone.</p>
-                     <div class="mt-4">
-                        <h5 class="font-semibold text-slate-800 mb-2" data-i18n="upscaling_recommended_title">Recommended Methods:</h5>
-                        <ul class="list-disc list-inside space-y-1 text-slate-600">
-                            <li><strong class="text-slate-700" data-i18n="upscaling_bicubic_method">Bicubic (`cv2.INTER_CUBIC`):</strong> <span data-i18n="upscaling_bicubic_desc">A great balance of quality and performance. It considers 16 surrounding pixels to produce sharper results than Bilinear.</span></li>
-                            <li><strong class="text-slate-700" data-i18n="upscaling_lanczos_method">Lanczos (`cv2.INTER_LANCZOS4`):</strong> <span data-i18n="upscaling_lanczos_desc">Often provides the highest quality for upscaling, preserving fine details exceptionally well, but is computationally more expensive.</span></li>
-                        </ul>
-                    </div>
+                 <div id="chart-detail-info" class="mt-6 p-4 bg-slate-50 rounded-lg text-center text-slate-700 min-h-[50px]">
+                    <p>Hover or click on a bubble to see details here.</p>
                 </div>
             </div>
         </section>
 
-        <section id="advanced" class="section-fade-in">
-             <div class="text-center mb-12">
-                <h3 class="text-3xl font-bold text-slate-900" data-i18n="advanced_section_title">Beyond Interpolation: Advanced Techniques</h3>
-                <p class="text-md text-slate-500 mt-2" data-i18n="advanced_section_description">When traditional methods hit their quality limits, advanced, content-aware techniques offer a path forward. These methods analyze the image's content to perform more intelligent resizing, especially for complex or quality-critical scenarios.</p>
-            </div>
-             <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100 flex flex-col">
-                    <h4 class="text-xl font-semibold text-slate-800 mb-3" data-i18n="seam_carving_title">Content-Aware Resizing (Seam Carving)</h4>
-                    <p class="text-slate-600 mb-4 flex-grow" data-i18n="seam_carving_description">Instead of scaling uniformly, this technique identifies and removes or duplicates "seams" of the least important pixels. It resizes the image non-uniformly, protecting important objects from distortion. This is ideal for changing an image's aspect ratio without squashing the main subject.</p>
-                    <div class="mt-auto pt-4 border-t border-slate-200">
-                        <span class="text-sm font-semibold text-blue-600 bg-blue-100 py-1 px-3 rounded-full" data-i18n="seam_carving_use_case">Use Case: Aspect ratio change while preserving subjects</span>
-                    </div>
-                </div>
-                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-100 flex flex-col">
-                    <h4 class="text-xl font-semibold text-slate-800 mb-3" data-i18n="super_resolution_title">Super-Resolution (Deep Learning)</h4>
-                    <p class="text-slate-600 mb-4 flex-grow" data-i18n="super_resolution_description">This is the modern solution to the upscaling problem. Instead of just interpolating, deep learning models are trained to "hallucinate" plausible high-frequency details. They genuinely add new, realistic information, resulting in dramatically sharper and more detailed enlargements than any traditional method can achieve.</p>
-                    <div class="mt-auto pt-4 border-t border-slate-200">
-                        <span class="text-sm font-semibold text-purple-600 bg-purple-100 py-1 px-3 rounded-full" data-i18n="super_resolution_use_case">Use Case: High-quality, large-scale image enlargement</span>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
-
-    <footer class="bg-slate-800 text-slate-400 mt-16">
-        <div class="container mx-auto px-6 py-8 text-center">
-            <p data-i18n="footer_line1">Interactive guide created from the "Python Image Resizing Methods" report.</p>
-            <p class="text-sm mt-2" data-i18n="footer_line2">Designed to make complex image processing concepts accessible and understandable.</p>
+    
+    <footer class="bg-slate-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-slate-400">An Interactive Visualization by Gemini</p>
+            <p class="text-sm text-slate-500 mt-2">Based on the "AI Website Design Blueprint" Report</p>
         </div>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
+            // Combined Translations for both AI Hub and Image Resizing Guide
             const translations = {
                 en: {
-                    page_title: "The Interactive Guide to Image Resizing in Python",
-                    header_title: "Python Image Resizing",
+                    page_title: "AI Knowledge Hub",
+                    header_title: "Explore the World of AI",
                     nav_fundamentals: "Fundamentals",
                     nav_interpolation: "Interpolation",
                     nav_scaling_direction: "Scaling Direction",
                     nav_advanced: "Advanced",
                     nav_placeholder: "Navigate...",
-                    hero_title: "Mastering Image Resizing",
-                    hero_description: "An interactive guide to the methods, trade-offs, and libraries for resizing images in Python. Move beyond simple scaling and learn to choose the right technique for optimal quality and performance.",
-                    fundamentals_section_title: "The Fundamentals",
-                    fundamentals_section_description: "Before diving into code, it's crucial to understand the core concepts and the primary tools available. This section covers the 'what' and 'why' of resizing and introduces the key Python libraries you'll encounter.",
-                    why_resize_title: "Why Resize? The Core Concepts",
-                    why_resize_description: "Image resizing is the process of changing an image's dimensions. It's a fundamental task driven by two main goals: optimizing performance (e.g., smaller files for websites) and preparing data (e.g., standardizing sizes for machine learning models).",
-                    aspect_ratio_rule_title: "The Golden Rule: Aspect Ratio",
-                    aspect_ratio_rule_description: "Preserving the aspect ratio (the proportional relationship between width and height) is paramount. Stretching or squashing an image by ignoring its original proportions leads to distortion. The first decision in any resize operation is whether to maintain this ratio.",
-                    python_toolbox_title: "The Python Toolbox",
-                    python_toolbox_description: "Python's ecosystem offers several powerful libraries for image manipulation. While they achieve similar goals, their APIs and default behaviors differ significantly, requiring careful attention.",
-                    pillow_title: "Pillow (PIL Fork)",
-                    pillow_description: "A user-friendly, general-purpose library. Its `resize()` method can distort aspect ratio, while `thumbnail()` preserves it.",
-                    opencv_title: "OpenCV",
-                    opencv_description: "A computer vision powerhouse. Its `cv2.resize()` is versatile but requires careful handling of parameters to maintain aspect ratio.",
-                    scikit_image_title: "Scikit-image",
-                    scikit_image_description: "Built for scientific analysis, it offers robust resizing with explicit anti-aliasing controls crucial for quality downsampling.",
-                    interpolation_section_title: "The Core Technique: Interpolation",
-                    interpolation_section_description: "Interpolation is the mathematical heart of resizing—it's how new pixel values are estimated. The method you choose directly impacts the final image's quality, speed of processing, and the visual artifacts produced. There is no single \"best\" method; it's always a trade-off.",
-                    comparison_chart_title: "Comparing Methods: Quality vs. Speed",
+                    hero_title: "Mastering Image Resizing", // This is from the image resizing guide, will be used when guide is open
+                    hero_description: "An interactive guide to the methods, trade-offs, and libraries for resizing images in Python. Move beyond simple scaling and learn to choose the right technique for optimal quality and performance.", // From image resizing guide
+                    fundamentals_section_title: "The Fundamentals", // From image resizing guide
+                    fundamentals_section_description: "Before diving into code, it's crucial to understand the core concepts and the primary tools available. This section covers the 'what' and 'why' of resizing and introduces the key Python libraries you'll encounter.", // From image resizing guide
+                    why_resize_title: "Why Resize? The Core Concepts", // From image resizing guide
+                    why_resize_description: "Image resizing is the process of changing an image's dimensions. It's a fundamental task driven by two main goals: optimizing performance (e.g., smaller files for websites) and preparing data (e.g., standardizing sizes for machine learning models).", // From image resizing guide
+                    aspect_ratio_rule_title: "The Golden Rule: Aspect Ratio", // From image resizing guide
+                    aspect_ratio_rule_description: "Preserving the aspect ratio (the proportional relationship between width and height) is paramount. Stretching or squashing an image by ignoring its original proportions leads to distortion. The first decision in any resize operation is whether to maintain this ratio.", // From image resizing guide
+                    python_toolbox_title: "The Python Toolbox", // From image resizing guide
+                    python_toolbox_description: "Python's ecosystem offers several powerful libraries for image manipulation. While they achieve similar goals, their APIs and default behaviors differ significantly, requiring careful attention.", // From image resizing guide
+                    pillow_title: "Pillow (PIL Fork)", // From image resizing guide
+                    pillow_description: "A user-friendly, general-purpose library. Its `resize()` method can distort aspect ratio, while `thumbnail()` preserves it.", // From image resizing guide
+                    opencv_title: "OpenCV", // From image resizing guide
+                    opencv_description: "A computer vision powerhouse. Its `cv2.resize()` is versatile but requires careful handling of parameters to maintain aspect ratio.", // From image resizing guide
+                    scikit_image_title: "Scikit-image", // From image resizing guide
+                    scikit_image_description: "Built for scientific analysis, it offers robust resizing with explicit anti-aliasing controls crucial for quality downsampling.", // From image resizing guide
+                    interpolation_section_title: "The Core Technique: Interpolation", // From image resizing guide
+                    interpolation_section_description: "Interpolation is the mathematical heart of resizing—it's how new pixel values are estimated. The method you choose directly impacts the final image's quality, speed of processing, and the visual artifacts produced. There is no single \"best\" method; it's always a trade-off.", // From image resizing guide
+                    comparison_chart_title: "Comparing Methods: Quality vs. Speed", // From image resizing guide
                     chart_quality_label: "Relative Quality",
                     chart_speed_label: "Relative Speed",
-                    tab_nearest: "Nearest Neighbor",
-                    tab_bilinear: "Bilinear",
-                    tab_bicubic: "Bicubic",
-                    tab_lanczos: "Lanczos",
-                    tab_area: "Area",
-                    nearest_title: "Nearest Neighbor Interpolation",
-                    nearest_description: "The simplest and fastest method. It assigns the new pixel the exact value of the single closest pixel from the original image. Conceptually, it just makes existing pixels bigger.",
-                    nearest_pros: ["Extremely fast, minimal processing", "Preserves sharp edges without blurring", "Good for pixel art and discrete data"],
-                    nearest_cons: ["Produces blocky, jagged results ('jaggies')", "Lacks smoothness, visually unappealing for photos"],
+                    tab_nearest: "Nearest Neighbor", // From image resizing guide
+                    tab_bilinear: "Bilinear", // From image resizing guide
+                    tab_bicubic: "Bicubic", // From image resizing guide
+                    tab_lanczos: "Lanczos", // From image resizing guide
+                    tab_area: "Area", // From image resizing guide
+                    nearest_title: "Nearest Neighbor Interpolation", // From image resizing guide
+                    nearest_description: "The simplest and fastest method. It assigns the new pixel the exact value of the single closest pixel from the original image. Conceptually, it just makes existing pixels bigger.", // From image resizing guide
+                    nearest_pros_0: "Extremely fast, minimal processing",
+                    nearest_pros_1: "Preserves sharp edges without blurring",
+                    nearest_pros_2: "Good for pixel art and discrete data",
+                    nearest_cons_0: "Produces blocky, jagged results ('jaggies')",
+                    nearest_cons_1: "Lacks smoothness, visually unappealing for photos",
                     nearest_artifact: "Blockiness & Jagged Edges",
                     nearest_bestFor: "Real-time applications, scaling pixel art, or when speed is the only concern.",
                     bilinear_title: "Bilinear Interpolation",
                     bilinear_description: "A step up in quality. It calculates a new pixel's value by taking a weighted average of the 4 (2x2) surrounding pixels. It produces much smoother results than Nearest Neighbor.",
-                    bilinear_pros: ["Good balance between speed and quality", "Significantly reduces jaggedness", "Relatively fast"],
-                    bilinear_cons: ["Can introduce some blurring", "Loses some fine detail compared to more advanced methods"],
+                    bilinear_pros_0: "Good balance between speed and quality",
+                    bilinear_pros_1: "Significantly reduces jaggedness",
+                    bilinear_pros_2: "Relatively fast",
+                    bilinear_cons_0: "Can introduce some blurring",
+                    bilinear_cons_1: "Loses some fine detail compared to more advanced methods",
                     bilinear_artifact: "Blurriness",
                     bilinear_bestFor: "General purpose resizing where a decent compromise between speed and quality is needed.",
                     bicubic_title: "Bicubic Interpolation",
                     bicubic_description: "A more advanced method that considers a 4x4 neighborhood of 16 pixels. It uses more complex calculations (cubic polynomials) to produce sharper, more detailed images.",
-                    bicubic_pros: ["Excellent quality with great detail retention", "Produces smoother gradations than bilinear", "Often the 'sweet spot' for quality"],
-                    bicubic_cons: ["Significantly slower than bilinear", "Can create 'haloing' or 'overshoot' artifacts along sharp edges"],
+                    bicubic_pros_0: "Excellent quality with great detail retention",
+                    bicubic_pros_1: "Produces smoother gradations than bilinear",
+                    bicubic_pros_2: "Often the 'sweet spot' for quality",
+                    bicubic_cons_0: "Significantly slower than bilinear",
+                    bicubic_cons_1: "Can create 'haloing' or 'overshoot' artifacts along sharp edges",
                     bicubic_artifact: "Overshoot / Haloing",
                     bicubic_bestFor: "High-quality photo enlargement and professional applications where quality is a priority.",
                     lanczos_title: "Lanczos Interpolation",
                     lanczos_description: "A high-quality interpolation method based on a sinc function. It considers an even larger neighborhood (typically 8x8) to produce very sharp results, but at a higher computational cost.",
-                    lanczos_pros: ["Superior sharpness and detail preservation", "Minimizes aliasing artifacts effectively", "Retains more information through multiple transformations"],
-                    lanczos_cons: ["Very computationally intensive (slow)", "Can produce noticeable 'ringing' artifacts along strong edges"],
+                    lanczos_pros_0: "Superior sharpness and detail preservation",
+                    lanczos_pros_1: "Minimizes aliasing artifacts effectively",
+                    lanczos_pros_2: "Retains more information through multiple transformations",
+                    lanczos_cons_0: "Very computationally intensive (slow)",
+                    lanczos_cons_1: "Can produce noticeable 'ringing' artifacts along strong edges",
                     lanczos_artifact: "Ringing Artifacts",
                     lanczos_bestFor: "Archival-quality scaling, video upscaling, and scenarios where maximum detail preservation is critical.",
                     area_title: "Area Interpolation (cv2.INTER_AREA)",
                     area_description: "A specialized method primarily for downscaling (shrinking images). It resamples by considering the pixel area relation, effectively averaging the pixels in a source area to create a single pixel in the destination.",
-                    area_pros: ["Produces sharp, artifact-free results when downscaling", "Excellent at preventing moiré patterns", "Specifically designed for shrinking"],
-                    area_cons: ["Performs very poorly for upscaling (similar to Nearest Neighbor)"],
+                    area_pros_0: "Produces sharp, artifact-free results when downscaling",
+                    area_pros_1: "Excellent at preventing moiré patterns",
+                    area_pros_2: "Specifically designed for shrinking",
+                    area_cons_0: "Performs very poorly for upscaling (similar to Nearest Neighbor)",
                     area_artifact: "Poor quality on upscaling",
                     area_bestFor: "Exclusively for downscaling/shrinking images. It's the recommended method for this task in OpenCV.",
                     tab_key_characteristics: "Key Characteristics:",
@@ -338,11 +569,12 @@
                     super_resolution_description: "This is the modern solution to the upscaling problem. Instead of just interpolating, deep learning models are trained to \"hallucinate\" plausible high-frequency details. They genuinely add new, realistic information, resulting in dramatically sharper and more detailed enlargements than any traditional method can achieve.",
                     super_resolution_use_case: "Use Case: High-quality, large-scale image enlargement",
                     footer_line1: "Interactive guide created from the \"Python Image Resizing Methods\" report.",
-                    footer_line2: "Designed to make complex image processing concepts accessible and understandable."
+                    footer_line2: "Designed to make complex image processing concepts accessible and understandable.",
+                    image_resizing_full_guide_title: "Interactive Guide: Image Resizing in Python" // New entry
                 },
                 es: {
-                    page_title: "La Guía Interactiva para Redimensionar Imágenes en Python",
-                    header_title: "Redimensionamiento de Imágenes en Python",
+                    page_title: "Centro de Conocimiento de IA",
+                    header_title: "Explora el Mundo de la IA",
                     nav_fundamentals: "Fundamentos",
                     nav_interpolation: "Interpolación",
                     nav_scaling_direction: "Dirección de Escalado",
@@ -376,38 +608,51 @@
                     tab_area: "Área",
                     nearest_title: "Interpolación por Vecino Más Cercano",
                     nearest_description: "El método más simple y rápido. Asigna al nuevo píxel el valor exacto del píxel más cercano de la imagen original. Conceptualmente, simplemente agranda los píxeles existentes.",
-                    nearest_pros: ["Extremadamente rápido, procesamiento mínimo", "Conserva los bordes nítidos sin desenfoque", "Bueno para arte de píxeles y datos discretos"],
-                    nearest_cons: ["Produce resultados pixelados y dentados ('jaggies')", "Carece de suavidad, visualmente poco atractivo para fotos"],
+                    nearest_pros_0: "Extremadamente rápido, procesamiento mínimo",
+                    nearest_pros_1: "Conserva los bordes nítidos sin desenfoque",
+                    nearest_pros_2: "Bueno para arte de píxeles y datos discretos",
+                    nearest_cons_0: "Produce resultados pixelados y dentados ('jaggies')",
+                    nearest_cons_1: "Carece de suavidad, visualmente poco atractivo para fotos",
                     nearest_artifact: "Pixelación y Bordes Dentados",
                     nearest_bestFor: "Aplicaciones en tiempo real, escalado de arte de píxeles, o cuando la velocidad es la única preocupación.",
                     bilinear_title: "Interpolación Bilineal",
                     bilinear_description: "Un paso adelante en calidad. Calcula el valor de un nuevo píxel tomando un promedio ponderado de los 4 (2x2) píxeles circundantes. Produce resultados mucho más suaves que el Vecino Más Cercano.",
-                    bilinear_pros: ["Buen equilibrio entre velocidad y calidad", "Reduce significativamente el dentado", "Relativamente rápido"],
-                    bilinear_cons: ["Puede introducir cierto desenfoque", "Pierde algunos detalles finos en comparación con métodos más avanzados"],
+                    bilinear_pros_0: "Buen equilibrio entre velocidad y calidad",
+                    bilinear_pros_1: "Reduce significativamente el dentado",
+                    bilinear_pros_2: "Relativamente rápido",
+                    bilinear_cons_0: "Puede introducir cierto desenfoque",
+                    bilinear_cons_1: "Pierde algunos detalles finos en comparación con métodos más avanzados",
                     bilinear_artifact: "Desenfoque",
                     bilinear_bestFor: "Redimensionamiento de propósito general donde se necesita un compromiso decente entre velocidad y calidad.",
                     bicubic_title: "Interpolación Bicúbica",
                     bicubic_description: "Un método más avanzado que considera un vecindario de 4x4 de 16 píxeles. Utiliza cálculos más complejos (polinomios cúbicos) para producir imágenes más nítidas y detalladas.",
-                    bicubic_pros: ["Excelente calidad con gran retención de detalles", "Produce gradaciones más suaves que la bilineal", "A menudo el 'punto óptimo' para la calidad"],
-                    bicubic_cons: ["Significativamente más lento que la bilineal", "Puede crear artefactos de 'halo' o 'sobrepaso' a lo largo de bordes nítidos"],
+                    bicubic_pros_0: "Excelente calidad con gran retención de detalles",
+                    bicubic_pros_1: "Produce gradaciones más suaves que la bilineal",
+                    bicubic_pros_2: "A menudo el 'punto óptimo' para la calidad",
+                    bicubic_cons_0: "Significativamente más lento que la bilineal",
+                    bicubic_cons_1: "Puede crear artefactos de 'halo' o 'sobrepaso' a lo largo de bordes nítidos",
                     bicubic_artifact: "Sobrepaso / Halo",
                     bicubic_bestFor: "Ampliación de fotos de alta calidad y aplicaciones profesionales donde la calidad es una prioridad.",
                     lanczos_title: "Interpolación Lanczos",
                     lanczos_description: "Un método de interpolación de alta calidad basado en una función sinc. Considera un vecindario aún más grande (típicamente 8x8) para producir resultados muy nítidos, pero con un costo computacional más alto.",
-                    lanczos_pros: ["Nitidez superior y preservación de detalles", "Minimiza eficazmente los artefactos de aliasing", "Retiene más información a través de múltiples transformaciones"],
-                    lanczos_cons: ["Muy intensivo computacionalmente (lento)", "Puede producir artefactos de 'anillo' notables a lo largo de bordes fuertes"],
+                    lanczos_pros_0: "Nitidez superior y preservación de detalles",
+                    lanczos_pros_1: "Minimiza eficazmente los artefactos de aliasing",
+                    lanczos_pros_2: "Retiene más información a través de múltiples transformaciones",
+                    lanczos_cons_0: "Muy intensivo computacionalmente (lento)",
+                    lanczos_cons_1: "Puede producir artefactos de 'anillo' notables a lo largo de bordes fuertes",
                     lanczos_artifact: "Artefactos de Anillo",
                     lanczos_bestFor: "Escalado de calidad de archivo, escalado de video y escenarios donde la máxima preservación de detalles es crítica.",
                     area_title: "Interpolación de Área (cv2.INTER_AREA)",
                     area_description: "Un método especializado principalmente para el muestreo descendente (reducción de imágenes). Remuestrea considerando la relación de área de píxeles, promediando efectivamente los valores de píxel en un área de origen para crear un solo píxel en el destino.",
-                    area_pros: ["Produce resultados nítidos y sin artefactos al reducir el tamaño", "Excelente para prevenir patrones de muaré", "Diseñado específicamente para reducir"],
-                    area_cons: ["Funciona muy mal para el escalado (similar a Vecino Más Cercano)"],
+                    area_pros_0: "Produce resultados nítidos y sin artefactos al reducir el tamaño",
+                    area_pros_1: "Excelente para prevenir patrones de muaré",
+                    area_pros_2: "Diseñado específicamente para reducir",
+                    area_cons_0: "Funciona muy mal para el escalado (similar a Vecino Más Cercano)",
                     area_artifact: "Mala calidad en el escalado",
                     area_bestFor: "Exclusivamente para la reducción de imágenes. Es el método recomendado para esta tarea en OpenCV.",
                     tab_key_characteristics: "Características Clave:",
                     tab_primary_artifact: "Artefacto Principal:",
                     tab_best_for: "Mejor Para:",
-                    scaling_direction_section_title: "La Dirección de Escalado Importa",
                     scaling_direction_section_title: "La Dirección de Escalado Importa",
                     scaling_direction_section_description: "Los desafíos y las mejores prácticas para redimensionar una imagen son fundamentalmente diferentes dependiendo de si la está haciendo más pequeña (escalado descendente) o más grande (escalado ascendente). Elegir el método de interpolación correcto para el trabajo es fundamental para lograr resultados de alta calidad.",
                     downscaling_title: "▼ Escalado Descendente (Reducción)",
@@ -419,123 +664,28 @@
                     downscaling_lanczos_bicubic_method: "Lanczos/Bicúbica con Anti-Aliasing:",
                     downscaling_lanczos_bicubic_desc: "Interpoladores de alta calidad, cuando se combinan con un filtro anti-aliasing (como en Pillow o Scikit-image), también producen excelentes resultados.",
                     upscaling_title: "▲ Escalado Ascendente (Ampliación)",
-                    upscaling_description: "El escalado ascendente crea nuevos píxeles mediante estimación. Crucialmente, los métodos tradicionales ",
-                    cannot_create_info_bold: "no pueden crear nueva información",
+                    upscaling_description: "Upscaling creates new pixels through estimation. Crucially, traditional methods ",
+                    cannot_create_info_bold: "cannot create new information",
                     upscaling_recommended_title: "Métodos Recomendados:",
-                    upscaling_bicubic_method: "Bicúbica (`cv2.INTER_CUBIC`):",
-                    upscaling_bicubic_desc: "Un gran equilibrio entre calidad y rendimiento. Considera 16 píxeles circundantes para producir resultados más nítidos que la Bilineal.",
+                    upscaling_bicubic_method: "Bicubic (`cv2.INTER_CUBIC`):",
+                    upscaling_bicubic_desc: "A great balance of quality and performance. It considers 16 surrounding pixels to produce sharper results than Bilinear.",
                     upscaling_lanczos_method: "Lanczos (`cv2.INTER_LANCZOS4`):",
-                    upscaling_lanczos_desc: "A menudo proporciona la más alta calidad para el escalado, preservando los detalles finos excepcionalmente bien, pero es computacionalmente más costoso.",
+                    upscaling_lanczos_desc: "Often provides the highest quality for upscaling, preserving fine details exceptionally well, but is computationally more expensive.",
                     advanced_section_title: "Más Allá de la Interpolación: Técnicas Avanzadas",
-                    advanced_section_description: "Cuando los métodos tradicionales alcanzan sus límites de calidad, las técnicas avanzadas y conscientes del contenido ofrecen un camino a seguir. Estos métodos analizan el contenido de la imagen para realizar un redimensionamiento más inteligente, especialmente para escenarios complejos o críticos para la calidad.",
+                    advanced_section_description: "When traditional methods hit their quality limits, advanced, content-aware techniques offer a path forward. These methods analyze the image's content to perform more intelligent resizing, especially for complex or quality-critical scenarios.",
                     seam_carving_title: "Redimensionamiento Consciente del Contenido (Seam Carving)",
-                    seam_carving_description: "En lugar de escalar uniformemente, esta técnica identifica y elimina o duplica \"costuras\", que son rutas de píxeles con baja importancia. Redimensiona la imagen de forma no uniforme, protegiendo los objetos importantes de la distorsión. Esto es ideal para cambiar la relación de aspecto de una imagen sin aplastar el sujeto principal.",
-                    seam_carving_use_case: "Caso de Uso: Cambio de relación de aspecto preservando sujetos",
-                    super_resolution_title: "Súper-Resolución (Aprendizaje Profundo)",
-                    super_resolution_description: "Esta es la solución moderna al problema del escalado. En lugar de solo interpolar, los modelos de aprendizaje profundo se entrenan para \"alucinar\" detalles plausibles de alta frecuencia. Realmente añaden información nueva y realista, lo que resulta en ampliaciones dramáticamente más nítidas y detalladas de lo que cualquier método tradicional puede lograr.",
-                    super_resolution_use_case: "Caso de Uso: Ampliación de imagen a gran escala y alta calidad",
-                    footer_line1: "Guía interactiva creada a partir del informe \"Métodos de Redimensionamiento de Imágenes en Python\".",
-                    footer_line2: "Diseñada para hacer que los conceptos complejos de procesamiento de imágenes sean accesibles y comprensibles."
-                },
-                fr: {
-                    page_title: "Le Guide Interactif du Redimensionnement d'Images en Python",
-                    header_title: "Redimensionnement d'Images Python",
-                    nav_fundamentals: "Fondamentaux",
-                    nav_interpolation: "Interpolation",
-                    nav_scaling_direction: "Direction de Mise à l'Échelle",
-                    nav_advanced: "Avancé",
-                    nav_placeholder: "Naviguer...",
-                    hero_title: "Maîtriser le Redimensionnement d'Images",
-                    hero_description: "Un guide interactif sur les méthodes, les compromis et les bibliothèques pour le redimensionnement d'images en Python. Allez au-delà de la simple mise à l'échelle et apprenez à choisir la bonne technique pour une qualité et des performances optimales.",
-                    fundamentals_section_title: "Les Fondamentaux",
-                    fundamentals_section_description: "Avant de plonger dans le code, il est crucial de comprendre les concepts de base et les principaux outils disponibles. Cette section couvre le 'quoi' et le 'pourquoi' du redimensionnement et présente les principales bibliothèques Python que vous rencontrerez.",
-                    why_resize_title: "Pourquoi Redimensionner ? Les Concepts Clés",
-                    why_resize_description: "Le redimensionnement d'images est le processus de modification des dimensions d'une image. C'est une tâche fondamentale motivée par deux objectifs principaux : l'optimisation des performances (par exemple, des fichiers plus petits pour les sites web) et la préparation des données (par exemple, la normalisation des tailles pour les modèles d'apprentissage automatique).",
-                    aspect_ratio_rule_title: "La Règle d'Or : Rapport d'Aspect",
-                    aspect_ratio_rule_description: "Préserver le rapport d'aspect (la relation proportionnelle entre la largeur et la hauteur) est primordial. Étirer ou compresser une image en ignorant ses proportions originales entraîne une distorsion. La première décision dans toute opération de redimensionnement est de maintenir ce rapport.",
-                    python_toolbox_title: "La Boîte à Outils Python",
-                    python_toolbox_description: "L'écosystème Python offre plusieurs bibliothèques puissantes pour la manipulation d'images. Bien qu'elles atteignent des objectifs similaires, leurs API et leurs comportements par défaut diffèrent considérablement, nécessitant une attention particulière.",
-                    pillow_title: "Pillow (Fork de PIL)",
-                    pillow_description: "Une bibliothèque conviviale et polyvalente. Sa méthode `resize()` peut déformer le rapport d'aspect, tandis que `thumbnail()` le préserve.",
-                    opencv_title: "OpenCV",
-                    opencv_description: "Une puissance en vision par ordinateur. Son `cv2.resize()` est polyvalent mais nécessite une manipulation soignée des paramètres pour maintenir le rapport d'aspect.",
-                    scikit_image_title: "Scikit-image",
-                    scikit_image_description: "Conçue pour l'analyse scientifique, elle offre un redimensionnement robuste avec des contrôles explicites d'anti-aliasing cruciaux pour un sous-échantillonnage de qualité.",
-                    interpolation_section_title: "La Technique Principale : Interpolation",
-                    interpolation_section_description: "L'interpolation est le cœur mathématique du redimensionnement : c'est ainsi que les nouvelles valeurs de pixels sont estimées. La méthode que vous choisissez a un impact direct sur la qualité finale de l'image, la vitesse de traitement et les artefacts visuels produits. Il n'y a pas de méthode \"meilleure\" unique ; c'est toujours un compromis.",
-                    comparison_chart_title: "Comparaison des Méthodes : Qualité vs. Vitesse",
-                    chart_quality_label: "Qualité Relative",
-                    chart_speed_label: "Vitesse Relative",
-                    tab_nearest: "Plus Proche Voisin",
-                    tab_bilinear: "Bilinéaire",
-                    tab_bicubic: "Bicubique",
-                    tab_lanczos: "Lanczos",
-                    tab_area: "Zone",
-                    nearest_title: "Interpolation du Plus Proche Voisin",
-                    nearest_description: "La méthode la plus simple et la plus rapide. Elle attribue au nouveau pixel la valeur exacte du pixel unique le plus proche de l'image originale. Conceptuellement, elle rend simplement les pixels existants plus grands.",
-                    nearest_pros: ["Extrêmement rapide, traitement minimal", "Préserve les bords nets sans flou", "Bon pour le pixel art et les données discrètes"],
-                    nearest_cons: ["Produit des résultats pixélisés et crénelés ('jaggies')", "Manque de douceur, visuellement peu attrayant pour les photos"],
-                    nearest_artifact: "Pixellisation et Bords Crénelés",
-                    nearest_bestFor: "Applications en temps réel, mise à l'échelle de pixel art, ou lorsque la vitesse est la seule préoccupation.",
-                    bilinear_title: "Interpolation Bilinéaire",
-                    bilinear_description: "Un pas en avant en qualité. Elle calcule la valeur d'un nouveau pixel en prenant une moyenne pondérée des 4 (2x2) pixels environnants. Elle produit des résultats beaucoup plus lisses que le Plus Proche Voisin.",
-                    bilinear_pros: ["Bon équilibre entre vitesse et qualité", "Réduit significativement le crénelage", "Relativement rapide"],
-                    bilinear_cons: ["Peut introduire un certain flou", "Perte de certains détails fins par rapport aux méthodes plus avancées"],
-                    bilinear_artifact: "Flou",
-                    bilinear_bestFor: "Redimensionnement général où un compromis décent entre vitesse et qualité est nécessaire.",
-                    bicubic_title: "Interpolation Bicubique",
-                    bicubic_description: "Une méthode plus avancée qui considère un voisinage 4x4 de 16 pixels. Elle utilise des calculs plus complexes (polynômes cubiques) pour produire des images plus nettes et plus détaillées.",
-                    bicubic_pros: ["Excellente qualité avec une grande rétention des détails", "Produit des dégradés plus doux que la bilinéaire", "Souvent le 'juste milieu' pour la qualité"],
-                    bicubic_cons: ["Sensiblement plus lente que la bilinéaire", "Peut créer des artefacts de 'halo' ou de 'dépassement' le long des bords nets"],
-                    bicubic_artifact: "Dépassement / Halo",
-                    bicubic_bestFor: "Agrandissement de photos de haute qualité et applications professionnelles où la qualité est une priorité.",
-                    lanczos_title: "Interpolation Lanczos",
-                    lanczos_description: "Une méthode d'interpolation de haute qualité basée sur une fonction sinc. Elle considère un voisinage encore plus grand (généralement 8x8) pour produire des résultats très nets, mais avec un coût de calcul plus élevé.",
-                    lanczos_pros: ["Netteté supérieure et préservation des détails", "Minimise efficacement les artefacts d'aliasing", "Conserve plus d'informations à travers de multiples transformations"],
-                    lanczos_cons: ["Très gourmande en calculs (lente)", "Peut produire des artefacts d'« anneau » notables le long des bords forts"],
-                    lanczos_artifact: "Artefacts d'Anneau",
-                    lanczos_bestFor: "Mise à l'échelle de qualité archivistique, suréchantillonnage vidéo et scénarios où une préservation maximale des détails est critique.",
-                    area_title: "Interpolation de Zone (cv2.INTER_AREA)",
-                    area_description: "Une méthode spécialisée principalement pour le sous-échantillonnage (réduction d'images). Elle rééchantillonne en considérant la relation de zone de pixels, en moyennant efficacement les valeurs de pixels dans une zone source pour créer un seul pixel dans la destination.",
-                    area_pros: ["Produit des résultats nets et sans artefacts lors de la réduction de taille", "Excellent pour prévenir les motifs de moiré", "Spécifiquement conçue pour la réduction"],
-                    area_cons: ["Performances très médiocres pour la mise à l'échelle (similaire à Plus Proche Voisin)"],
-                    area_artifact: "Mauvaise qualité lors de la mise à l'échelle",
-                    area_bestFor: "Exclusivement pour la réduction d'images. C'est la méthode recommandée pour cette tâche dans OpenCV.",
-                    tab_key_characteristics: "Caractéristiques Clés :",
-                    tab_primary_artifact: "Artefact Principal :",
-                    tab_best_for: "Meilleur Pour :",
-                    scaling_direction_section_title: "La Direction de Mise à l'Échelle Compte",
-                    scaling_direction_section_description: "Les défis et les meilleures pratiques pour redimensionner une image sont fondamentalement différents selon que vous la réduisez (sous-échantillonnage) ou l'agrandissez (suréchantillonnage). Choisir la bonne méthode d'interpolation pour la tâche est essentiel pour obtenir des résultats de haute qualité.",
-                    downscaling_title: "▼ Sous-échantillonnage (Réduction)",
-                    downscaling_description: "Le sous-échantillonnage supprime des informations de pixels. Le principal défi est de le faire avec élégance sans introduire d'artefacts disgracieux. La clé est l'",
-                    anti_aliasing_bold: "anti-aliasing",
-                    downscaling_recommended_title: "Méthodes Recommandées :",
-                    downscaling_area_method: "Zone (`cv2.INTER_AREA`) :",
-                    downscaling_area_desc: "La référence. Moyenne les valeurs de pixels sur une zone, produisant des résultats nets et propres avec un minimum d'artefacts.",
-                    downscaling_lanczos_bicubic_method: "Lanczos/Bicubique avec Anti-aliasing :",
-                    downscaling_lanczos_bicubic_desc: "Interpolateurs de haute qualité, lorsqu'ils sont associés à un filtre anti-aliasing (comme dans Pillow ou Scikit-image), donnent également d'excellents résultats.",
-                    upscaling_title: "▲ Suréchantillonnage (Agrandissement)",
-                    upscaling_description: "Le suréchantillonnage crée de nouveaux pixels par estimation. Il est crucial de noter que les méthodes traditionnelles ",
-                    cannot_create_info_bold: "ne peuvent pas créer de nouvelles informations",
-                    upscaling_recommended_title: "Méthodes Recommandées :",
-                    upscaling_bicubic_method: "Bicubique (`cv2.INTER_CUBIC`) :",
-                    upscaling_bicubic_desc: "Un excellent équilibre entre qualité et performance. Il considère 16 pixels environnants pour produire des résultats plus nets que le Bilinéaire.",
-                    upscaling_lanczos_method: "Lanczos (`cv2.INTER_LANCZOS4`) :",
-                    upscaling_lanczos_desc: "Offre souvent la plus haute qualité pour la mise à l'échelle, préservant exceptionnellement bien les détails fins, mais est plus coûteuse en calculs.",
-                    advanced_section_title: "Au-delà de l'Interpolation : Techniques Avancées",
-                    advanced_section_description: "Lorsque les méthodes traditionnelles atteignent leurs limites de qualité, les techniques avancées et sensibles au contenu offrent une voie à suivre. Ces méthodes analysent le contenu de l'image pour effectuer un redimensionnement plus intelligent, en particulier pour les scénarios complexes ou critiques pour la qualité.",
-                    seam_carving_title: "Redimensionnement sensible au contenu (Seam Carving)",
-                    seam_carving_description: "Au lieu d'une mise à l'échelle uniforme, cette technique identifie et supprime ou duplique des \"coutures\", qui sont des chemins de pixels de faible importance. Elle redimensionne l'image de manière non uniforme, protégeant les objets importants de la distorsion. C'est idéal pour modifier le rapport d'aspect d'une image sans écraser le sujet principal.",
-                    seam_carving_use_case: "Cas d'utilisation : Changement de rapport d'aspect tout en préservant les sujets",
-                    super_resolution_title: "Super-Résolution (Apprentissage Profond)",
-                    super_resolution_description: "C'est la solution moderne au problème de la mise à l'échelle. Au lieu de simplement interpoler, les modèles d'apprentissage profond sont entraînés à \"halluciner\" des détails haute fréquence plausibles. Ils ajoutent véritablement de nouvelles informations réalistes, ce qui permet des agrandissements considérablement plus nets et plus détaillés que ce que n'importe quelle méthode traditionnelle peut réaliser.",
-                    super_resolution_use_case: "Cas d'utilisation : Agrandissement d'images à grande échelle et de haute qualité",
-                    footer_line1: "Guide interactif créé à partir du rapport \"Méthodes de Redimensionnement d'Images Python\".",
-                    footer_line2: "Conçu pour rendre les concepts complexes de traitement d'images accessibles et compréhensibles."
+                    seam_carving_description: "بدلاً من التحجيم الموحد، تحدد هذه التقنية وتزيل أو تكرر 'درزات'، وهي مسارات من البكسلات ذات الأهمية المنخفضة. تقوم بتغيير حجم الصورة بشكل غير موحد، مما يحمي الكائنات المهمة من التشويه. وهذا مثالي لتغيير نسبة العرض إلى الارتفاع للصورة دون ضغط الموضوع الرئيسي.",
+                    seam_carving_use_case: "حالة الاستخدام: تغيير نسبة العرض إلى الارتفاع مع الحفاظ على الموضوعات",
+                    super_resolution_title: "الدقة الفائقة (التعلم العميق)",
+                    super_resolution_description: "This is the modern solution to the upscaling problem. Instead of just interpolating, deep learning models are trained to \"hallucinate\" plausible high-frequency details. They genuinely add new, realistic information, resulting in dramatically sharper and more detailed enlargements than any traditional method can achieve.",
+                    super_resolution_use_case: "Use Case: High-quality, large-scale image enlargement",
+                    footer_line1: "Interactive guide created from the \"Python Image Resizing Methods\" report.",
+                    footer_line2: "Designed to make complex image processing concepts accessible and understandable.",
+                    image_resizing_full_guide_title: "Interactive Guide: Image Resizing in Python"
                 },
                 ar: {
-                    page_title: "الدليل التفاعلي لتغيير حجم الصور في بايثون",
-                    header_title: "تغيير حجم الصور في بايثون",
+                    page_title: "مركز المعرفة بالذكاء الاصطناعي",
+                    header_title: "استكشف عالم الذكاء الاصطناعي",
                     nav_fundamentals: "الأساسيات",
                     nav_interpolation: "الاستيفاء",
                     nav_scaling_direction: "اتجاه التحجيم",
@@ -569,32 +719,46 @@
                     tab_area: "المساحة",
                     nearest_title: "استيفاء أقرب جار",
                     nearest_description: "الطريقة الأبسط والأسرع. تُعيّن للبكسل الجديد القيمة الدقيقة للبكسل الوحيد الأقرب من الصورة الأصلية. من الناحية المفاهيمية، إنها تجعل البكسلات الموجودة أكبر.",
-                    nearest_pros: ["سريعة للغاية، الحد الأدنى من المعالجة", "تحافظ على الحواف الحادة دون تشويش", "جيدة لفن البكسل والبيانات المنفصلة"],
-                    nearest_cons: ["تنتج نتائج مربعة ومتعرجة ('jaggies')", "تفتقر إلى النعومة، غير جذابة بصريًا للصور"],
+                    nearest_pros_0: "سريعة للغاية، الحد الأدنى من المعالجة",
+                    nearest_pros_1: "تحافظ على الحواف الحادة دون تشويش",
+                    nearest_pros_2: "جيدة لفن البكسل والبيانات المنفصلة",
+                    nearest_cons_0: "تنتج نتائج مربعة ومتعرجة ('jaggies')",
+                    nearest_cons_1: "تفتقر إلى النعومة، غير جذابة بصريًا للصور",
                     nearest_artifact: "التكتل والحواف المتعرجة",
                     nearest_bestFor: "تطبيقات الوقت الفعلي، تحجيم فن البكسل، أو عندما تكون السرعة هي الشغل الشاغل الوحيد.",
                     bilinear_title: "الاستيفاء ثنائي الخط",
                     bilinear_description: "خطوة للأمام في الجودة. يحسب قيمة البكسل الجديد عن طريق أخذ متوسط مرجح لأقرب 4 (2x2) بكسلات محيطة. ينتج نتائج أكثر سلاسة بكثير من أقرب جار.",
-                    bilinear_pros: ["توازن جيد بين السرعة والجودة", "يقلل بشكل كبير من التعرج", "سريع نسبيًا"],
-                    bilinear_cons: ["يمكن أن يؤدي إلى بعض التعتيم", "يفقد بعض التفاصيل الدقيقة مقارنة بالطرق الأكثر تقدمًا"],
+                    bilinear_pros_0: "توازن جيد بين السرعة والجودة",
+                    bilinear_pros_1: "يقلل بشكل كبير من التعرج",
+                    bilinear_pros_2: "سريع نسبيًا",
+                    bilinear_cons_0: "يمكن أن يؤدي إلى بعض التعتيم",
+                    bilinear_cons_1: "يفقد بعض التفاصيل الدقيقة مقارنة بالطرق الأكثر تقدمًا",
                     bilinear_artifact: "التمويه",
                     bilinear_bestFor: "تغيير حجم الأغراض العامة حيث يلزم حل وسط جيد بين السرعة والجودة.",
                     bicubic_title: "الاستيفاء ثنائي التكعيب",
                     bicubic_description: "طريقة استيفاء أكثر تقدمًا تأخذ في الاعتبار جوار 4x4 من 16 بكسل. تستخدم حسابات أكثر تعقيدًا (متعددات الحدود التكعيبية) لإنتاج صور أكثر وضوحًا وتفصيلاً.",
-                    bicubic_pros: ["جودة ممتازة مع احتفاظ كبير بالتفاصيل", "تنتج تدرجات أكثر سلاسة من ثنائي الخط", "غالبًا ما تكون 'النقطة المثلى' للجودة"],
-                    bicubic_cons: ["أبطأ بكثير من ثنائي الخط", "يمكن أن تخلق 'هالات' أو 'تجاوزات' على طول الحواف الحادة"],
+                    bicubic_pros_0: "جودة ممتازة مع احتفاظ كبير بالتفاصيل",
+                    bicubic_pros_1: "تنتج تدرجات أكثر سلاسة من ثنائي الخط",
+                    bicubic_pros_2: "غالبًا ما تكون 'النقطة المثلى' للجودة",
+                    bicubic_cons_0: "أبطأ بكثير من ثنائي الخط",
+                    bicubic_cons_1: "يمكن أن تخلق 'هالات' أو 'تجاوزات' على طول الحواف الحادة",
                     bicubic_artifact: "التجاوز / الهالة",
                     bicubic_bestFor: "تكبير الصور عالية الجودة والتطبيقات الاحترافية حيث تكون الجودة أولوية.",
                     lanczos_title: "استيفاء لانكوز",
                     lanczos_description: "طريقة استيفاء عالية الجودة تعتمد على دالة سينك. تأخذ في الاعتبار جوارًا أكبر (عادةً 8x8) لإنتاج نتائج واضحة جدًا، ولكن بتكلفة حسابية أعلى.",
-                    lanczos_pros: ["وضوح فائق وحفظ التفاصيل", "يقلل بشكل فعال من آثار التعرج", "يحتفظ بمزيد من المعلومات عبر تحويلات متعددة"],
-                    lanczos_cons: ["مكلفة للغاية من الناحية الحسابية (بطيئة)", "يمكن أن تنتج 'آثار رنين' ملحوظة على طول الحواف القوية"],
+                    lanczos_pros_0: "وضوح فائق وحفظ التفاصيل",
+                    lanczos_pros_1: "يقلل بشكل فعال من آثار التعرج",
+                    lanczos_pros_2: "يحتفظ بمزيد من المعلومات عبر تحويلات متعددة",
+                    lanczos_cons_0: "مكلفة للغاية من الناحية الحسابية (بطيئة)",
+                    lanczos_cons_1: "يمكن أن تنتج 'آثار رنين' ملحوظة على طول الحواف القوية",
                     lanczos_artifact: "آثار الرنين",
                     lanczos_bestFor: "تحجيم بجودة أرشيفية، وتكبير الفيديو، والسيناريوهات التي يكون فيها الحفاظ على أقصى تفاصيل أمرًا بالغ الأهمية.",
                     area_title: "استيفاء المنطقة (cv2.INTER_AREA)",
                     area_description: "طريقة متخصصة مخصصة بشكل أساسي لتصغير الحجم (تقليص الصور). تقوم بإعادة تشكيل الصورة من خلال مراعاة العلاقة بين مناطق البكسل، مما يؤدي إلى متوسط قيم البكسل في منطقة المصدر لإنشاء بكسل واحد في الوجهة.",
-                    area_pros: ["تنتج نتائج واضحة وخالية من الشوائب عند تقليل الحجم", "ممتازة في منع أنماط مواريه", "مصممة خصيصًا للتقليص"],
-                    area_cons: ["أدائها ضعيف جدًا في التكبير (مشابه لأقرب جار)"],
+                    area_pros_0: "تنتج نتائج واضحة وخالية من الشوائب عند تقليل الحجم",
+                    area_pros_1: "ممتازة في منع أنماط مواريه",
+                    area_pros_2: "مصممة خصيصًا للتقليص",
+                    area_cons_0: "أدائها ضعيف جدًا في التكبير (مشابه لأقرب جار)",
                     area_artifact: "جودة رديئة عند التكبير",
                     area_bestFor: "حصريًا لتقليص / تصغير حجم الصور. إنها الطريقة الموصى بها لهذه المهمة في OpenCV.",
                     tab_key_characteristics: "الخصائص الرئيسية:",
@@ -613,7 +777,7 @@
                     upscaling_title: "▲ تكبير الحجم (التكبير)",
                     upscaling_description: "يُنشئ تكبير الحجم بكسلات جديدة من خلال التقدير. الأهم من ذلك، أن الطرق التقليدية ",
                     cannot_create_info_bold: "لا يمكنها إنشاء معلومات جديدة",
-                    upscaling_recommended_title: "الطرق الموصى بها:",
+                    upscaling_recommended_title: "الموصى بها:",
                     upscaling_bicubic_method: "ثنائي التكعيب (`cv2.INTER_CUBIC`):",
                     upscaling_bicubic_desc: "توازن رائع بين الجودة والأداء. تأخذ 16 بكسل محيطة لإنتاج نتائج أكثر وضوحًا من ثنائي الخط.",
                     upscaling_lanczos_method: "لانكوز (`cv2.INTER_LANCZOS4`):",
@@ -621,18 +785,20 @@
                     advanced_section_title: "ما وراء الاستيفاء: التقنيات المتقدمة",
                     advanced_section_description: "عندما تصل الطرق التقليدية إلى حدود جودتها، توفر التقنيات المتقدمة الواعية بالمحتوى مسارًا إلى الأمام. تحلل هذه الطرق محتوى الصورة لإجراء تغيير حجم أكثر ذكاءً، خاصة للسيناريوهات المعقدة أو الحرجة من حيث الجودة.",
                     seam_carving_title: "تغيير الحجم الواعي بالمحتوى (نحت الدرزات)",
-                    seam_carving_description: "بدلاً من التحجيم الموحد، تحدد هذه التقنية وتزيل أو تكرر 'درزات'، وهي مسارات من البكسلات ذات الأهمية المنخفضة. تقوم بتغيير حجم الصورة بشكل غير موحد، مما يحمي الكائنات المهمة من التشويه. وهذا مثالي لتغيير نسبة العرض إلى الارتفاع للصورة دون ضغط الموضوع الرئيسي.",
+                    seam_carving_description: "Instead of scaling uniformly, this technique identifies and removes or duplicates \"seams\" of the least important pixels. It resizes the image non-uniformly, protecting important objects from distortion. This is ideal for changing an image's aspect ratio without squashing the main subject.",
                     seam_carving_use_case: "حالة الاستخدام: تغيير نسبة العرض إلى الارتفاع مع الحفاظ على الموضوعات",
                     super_resolution_title: "الدقة الفائقة (التعلم العميق)",
-                    super_resolution_description: "هذا هو الحل الحديث لمشكلة التكبير. بدلاً من مجرد الاستيفاء، يتم تدريب نماذج التعلم العميق على 'هلوسة' تفاصيل عالية التردد معقولة. إنها تضيف معلومات جديدة وواقعية حقًا، مما يؤدي إلى تكبيرات أكثر وضوحًا وتفصيلاً بشكل كبير مما يمكن لأي طريقة تقليدية تحقيقه.",
-                    super_resolution_use_case: "حالة الاستخدام: تكبير الصور عالي الجودة على نطاق واسع",
+                    super_resolution_description: "This is the modern solution to the upscaling problem. Instead of just interpolating, deep learning models are trained to \"hallucinate\" plausible high-frequency details. They genuinely add new, realistic information, resulting in dramatically sharper and more detailed enlargements than any traditional method can achieve.",
+                    super_resolution_use_case: "Use Case: High-quality, large-scale image enlargement",
                     footer_line1: "دليل تفاعلي تم إنشاؤه من تقرير \"طرق تغيير حجم الصور في بايثون\".",
-                    footer_line2: "مصمم لجعل مفاهيم معالجة الصور المعقدة سهلة الوصول والفهم."
+                    footer_line2: "مصمم لجعل مفاهيم معالجة الصور المعقدة سهلة الوصول والفهم.",
+                    image_resizing_full_guide_title: "دليل تفاعلي: تغيير حجم الصور في بايثون"
                 }
             };
 
             let currentLanguage = 'en';
-            let interpolationChartInstance = null;
+            let aiTaxonomyChart;
+            let interpolationChartInstance = null; // Chart for the image resizing guide
 
             const interpolationTabsData = {
                 nearest: {
@@ -677,6 +843,57 @@
                 }
             };
 
+            const aiData = {
+                'foundations': { id: 'foundations', name: 'Foundations of AI', type: 'core', desc: 'Essential context, including definitions, history, intelligent agents, and reasoning algorithms.[19, 20]', details: 'This module provides essential context for newcomers, encompassing definitions, the history of AI, the distinction between symbolic and subsymbolic AI, intelligent agents, and various reasoning algorithms.[19, 20] It forms the philosophical and historical bedrock upon which all other AI disciplines are built.' },
+                'paradigms': { id: 'paradigms', name: 'AI Paradigms', type: 'core', desc: 'How AI models problems, covering knowledge representation, search algorithms, and optimization.[19]', details: 'This section delves into how AI systems model and solve problems, covering knowledge representation, description logics, semantic networks, knowledge graphs, search algorithms, optimization, and constraint satisfaction.[19] It is the "how" of AI problem-solving.' },
+                'decision-learning': { id: 'decision-learning', name: 'Deciding & Learning', type: 'core', desc: 'The mechanisms of AI decision-making, including logic, inference, and expert systems.[19, 21, 20]', details: 'This module explores the mechanisms by which AI makes decisions, including logic and inference, model-based reasoning, expert systems [21], case-based reasoning, and probabilistic/fuzzy logic.[19, 21] It focuses on creating rational agents that can act upon the world.' },
+                'ml': { id: 'ml', name: 'Machine Learning (ML)', type: 'core', desc: 'Algorithms that enable systems to learn from data without explicit programming.[22]', relations: ['supervised', 'unsupervised', 'reinforcement', 'cv', 'nlp'], details: 'A critical subfield of AI [22], machine learning focuses on algorithms that enable systems to learn from data without explicit programming.[22] It\'s the engine behind many of today\'s most impressive AI applications.' },
+                'nlp': { id: 'nlp', name: 'Natural Language Processing', type: 'core', desc: 'Enabling computers to understand, interpret, and generate human language.[22]', relations: ['ml', 'generative-ai'], details: 'This subfield enables computers to understand, interpret, and generate human language.[22] Significant advancements have been made through Deep Learning in NLP, particularly with recurrent neural networks (RNNs) and transformers.[22]' },
+                'cv': { id: 'cv', name: 'Computer Vision', type: 'core', desc: 'Techniques for computers to "see" and understand digital images and videos.[21, 22]', relations: ['ml', 'robotics', 'image-resizing'], details: 'This branch aims to develop techniques for computers to see and understand digital images and videos.[21, 22] Its applications are diverse, including object tracking, facial recognition [21], autonomous vehicles, and medical imaging analysis.[4]' },
+                'ethics': { id: 'ethics', name: 'AI Ethics & Governance', type: 'core', desc: 'Addressing the societal implications and responsible development of AI.[19]', details: 'A crucial topic addressing the societal implications and responsible development of AI.[19] It covers bias, fairness, transparency, accountability, and policy to ensure AI benefits humanity.' },
+
+                'media-society': { id: 'media-society', name: 'AI for Media & Society', type: 'special', desc: 'AI\'s role in media, social platforms, and its democratic implications.[19]', relations: ['nlp', 'cv'], details: 'This pillar includes music/sound analysis, AI and game media, web/social media analysis, and human-centered media analysis.[19] exploring AI\'s profound impact on culture and communication.' },
+                'trustworthy-ai': { id: 'trustworthy-ai', name: 'Trustworthy AI', type: 'special', desc: 'Methods for building reliable, robust, and fair AI systems.[19]', relations: ['ml', 'ethics'], details: 'Focuses on automated algorithm configuration, selection, performance prediction, model selection, hyperparameter optimization, and neural architecture search.[19] This is vital for building reliable AI systems.' },
+                'data-driven-learning': { id: 'data-driven-learning', name: 'Data-Driven Learning', type: 'special', desc: 'Advanced neural networks, generative models, and distributed learning.[19]', relations: ['ml', 'generative-ai'], details: 'This pillar covers advanced neural network architectures (e.g., CNNs, RNNs, Transformers), Neurosymbolic AI, Multi-Agent Systems, and Distributed/Federated learning.[19]' },
+                'human-centric-ai': { id: 'human-centric-ai', name: 'Human-Centric AI', type: 'special', desc: 'Designing AI to collaborate with, augment, and understand humans.[19]', relations: ['nlp', 'robotics'], details: 'Focuses on common ground, embodiment, multimodal communication, cognitive architecture, interpretability, and hybrid Human-AI systems.[19] It aims to make AI a better partner for people.' },
+
+                'supervised': { id: 'supervised', name: 'Supervised Learning', type: 'sub', parent: 'ml', desc: 'Training on labeled data where the correct output is known.[22]' },
+                'unsupervised': { id: 'unsupervised', name: 'Unsupervised Learning', type: 'sub', parent: 'ml', desc: 'Finding patterns or groupings in unlabeled data.[22]' },
+                'reinforcement': { id: 'reinforcement', name: 'Reinforcement Learning', type: 'sub', parent: 'ml', desc: 'Learning to make decisions by performing actions in an environment to maximize a reward.[22]' },
+                'generative-ai': { id: 'generative-ai', name: 'Generative AI', type: 'sub', parent: 'data-driven-learning', desc: 'Creating new content (images, text, etc.).[19]', relations: ['nlp', 'cv'] },
+                'robotics': { id: 'robotics', name: 'Robotics', type: 'sub', parent: 'human-centric-ai', desc: 'Physical agents that interact with the world.[21, 22]', relations: ['cv', 'ml'] },
+                
+                'image-resizing': {
+                    id: 'image-resizing',
+                    name: 'Image Resizing in Python',
+                    type: 'practical-guide', // New type for practical guides
+                    desc: 'An interactive guide to methods, trade-offs, and libraries for resizing images in Python, crucial for Computer Vision.',
+                    details: 'This comprehensive guide dives deep into the mathematical heart of image resizing—interpolation—and explores various Python libraries and advanced techniques like Super-Resolution. Learn to choose the right method for optimal quality and performance in your computer vision and data science projects.',
+                    isFullPageGuide: true // Custom flag to trigger full guide display
+                },
+            };
+
+            const coreModulesGrid = document.getElementById('core-modules-grid');
+            const specialTopicsGrid = document.getElementById('special-topics-grid');
+            const practicalGuidesGrid = document.getElementById('practical-guides-grid'); // New grid for practical guides
+
+            const detailView = document.getElementById('detail-view-section');
+            const detailTitle = document.getElementById('detail-title');
+            const detailDescription = document.getElementById('detail-description');
+            const detailContent = document.getElementById('detail-content');
+            const closeDetailViewBtn = document.getElementById('close-detail-view');
+
+            const imageResizingGuideContainer = document.getElementById('image-resizing-guide-container');
+            const closeImageResizingGuideBtn = document.getElementById('close-image-resizing-guide');
+            const irTabsContainer = document.getElementById('ir-tabs-container'); // Correct ID for image resizing tabs
+            
+            // irTabButtons will be initialized only when imageResizingGuideContainer is shown
+            let irTabButtons = []; // Corrected syntax
+            if (irTabsContainer) { // Check if element exists before querying children
+                irTabButtons = irTabsContainer.querySelectorAll('.ir-tab-button');
+            }
+            const irTabContentEl = document.getElementById('ir-tab-content'); // Corrected ID for image resizing tab content
+
             function getTranslation(key, lang = currentLanguage) {
                 const parts = key.split('_');
                 let value = translations[lang];
@@ -697,7 +914,6 @@
                 return value;
             }
 
-
             function applyTranslations(lang) {
                 document.querySelectorAll('[data-i18n]').forEach(element => {
                     const key = element.getAttribute('data-i18n');
@@ -711,40 +927,28 @@
                     }
                 });
 
-                document.getElementById('page-title').textContent = getTranslation('page_title', lang);
+                document.title = getTranslation('page_title', lang); // Update global page title
                 document.documentElement.lang = lang; // Set HTML lang attribute
 
-                // Update text direction for RTL languages
                 if (lang === 'ar') {
                     document.body.classList.add('rtl');
                     document.body.classList.remove('ltr');
                     document.body.style.direction = 'rtl';
-                    document.body.style.textAlign = 'right';
                 } else {
                     document.body.classList.remove('rtl');
                     document.body.classList.add('ltr');
                     document.body.style.direction = 'ltr';
-                    document.body.style.textAlign = 'left';
                 }
 
-                // Update tab content for the currently active tab
-                const activeTabButton = document.querySelector('.tab-active');
-                if (activeTabButton) {
-                    updateTabContent(activeTabButton.dataset.tab);
-                } else {
-                    // Default to bicubic if no tab is active
-                    updateTabContent('bicubic');
-                }
-
-                // Update Chart.js labels
+                // Update Chart.js labels for interpolation chart if it exists
                 if (interpolationChartInstance) {
-                    interpolationChartInstance.data.datasets[0].label = getTranslation('chart_quality_label', lang);
-                    interpolationChartInstance.data.datasets[1].label = getTranslation('chart_speed_label', lang);
+                    interpolationChartInstance.data.datasets[0].label = getTranslation('chart_quality_label', lang); // Corrected
+                    interpolationChartInstance.data.datasets[1].label = getTranslation('chart_speed_label', lang); // Corrected
                     interpolationChartInstance.options.scales.y.ticks.callback = function(value) {
                         return value + '%';
                     };
                     interpolationChartInstance.options.plugins.tooltip.callbacks.label = function(context) {
-                        let label = context.dataset.label || '';
+                        let label = context.dataset.label || ''; // Corrected
                         if (label) {
                             label += ': ';
                         }
@@ -755,13 +959,279 @@
                     };
                     interpolationChartInstance.update();
                 }
+
+                // Update tab content for the currently active tab in image resizing guide
+                // Only if the guide is currently visible to avoid errors with hidden elements' charts
+                if(!imageResizingGuideContainer.classList.contains('hidden')) {
+                    const activeIrTabButton = document.querySelector('#ir-tabs-container .ir-tab-active'); // Corrected selector
+                    if (activeIrTabButton) {
+                        updateImageResizingTabContent(activeIrTabButton.dataset.tab);
+                    } else {
+                        // Default to bicubic if no tab is active for image resizing guide
+                        updateImageResizingTabContent('bicubic');
+                    }
+                }
             }
 
-            const tabContainer = document.getElementById('tabs-container');
-            const tabButtons = tabContainer.querySelectorAll('.tab');
-            const tabContentEl = document.getElementById('tab-content');
 
-            function updateTabContent(tabKey) {
+            const createCard = (item) => {
+                return `
+                    <div class="section-card bg-white p-6 rounded-xl shadow-md border border-slate-200 cursor-pointer" data-id="${item.id}" data-type="${item.type}">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2 searchable">${item.name}</h3>
+                        <p class="text-slate-500 searchable">${item.desc}</p>
+                    </div>
+                `;
+            };
+
+            Object.values(aiData).forEach(item => {
+                if (item.type === 'core') {
+                    coreModulesGrid.innerHTML += createCard(item);
+                } else if (item.type === 'special') {
+                    specialTopicsGrid.innerHTML += createCard(item);
+                } else if (item.type === 'practical-guide') { // New category for practical guides
+                    practicalGuidesGrid.innerHTML += createCard(item);
+                }
+            });
+
+            const showDetailView = (id) => {
+                const item = aiData[id];
+                if (!item) return;
+
+                detailTitle.textContent = item.name;
+                detailDescription.textContent = item.desc;
+                detailContent.innerHTML = `<p class="searchable">${item.details || 'More details coming soon.'}</p>`; // Corrected ||
+                
+                detailView.classList.remove('hidden');
+                detailView.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+
+            const hideDetailView = () => {
+                detailView.classList.add('hidden');
+            };
+
+            const showImageResizingGuide = () => {
+                hideDetailView(); // Hide general detail view
+                imageResizingGuideContainer.classList.remove('hidden');
+                imageResizingGuideContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                initializeInterpolationChart(); // Initialize/re-initialize chart when shown
+                // Ensure the bicubic tab is active when the guide opens
+                const bicubicButton = irTabsContainer.querySelector('[data-tab="bicubic"]');
+                if (bicubicButton) {
+                    bicubicButton.click(); // This will trigger the event listener and update content
+                }
+                setupImageResizingTabListeners(); // Setup listeners when guide is shown
+            };
+
+            const hideImageResizingGuide = () => {
+                imageResizingGuideContainer.classList.add('hidden');
+            };
+
+
+            document.querySelectorAll('.section-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.dataset.id;
+                    const item = aiData[id];
+                    if (item && item.isFullPageGuide) {
+                        showImageResizingGuide();
+                    } else {
+                        showDetailView(id);
+                    }
+                });
+            });
+
+            closeDetailViewBtn.addEventListener('click', hideDetailView);
+            closeImageResizingGuideBtn.addEventListener('click', hideImageResizingGuide);
+
+            // Chart.js Implementation for AI Taxonomy (main chart)
+            const ctxAiTaxonomy = document.getElementById('aiTaxonomyChart').getContext('2d');
+            const chartDetailInfo = document.getElementById('chart-detail-info');
+            
+            const createAiTaxonomyChartData = (highlightedId = null) => {
+                const datasets = [{ // Corrected: wrapped in array brackets
+                    label: 'AI Fields',
+                    data: Object.values(aiData).filter(item => item.type !== 'practical-guide').map(item => ({ // Exclude practical guides from main chart
+                        x: Math.random() * 100,
+                        y: Math.random() * 100,
+                        r: item.type === 'sub' ? 10 : (item.type === 'special' ? 18 : 25),
+                        id: item.id,
+                        name: item.name,
+                        type: item.type,
+                        desc: item.desc,
+                        relations: item.relations || []
+                    })),
+                    backgroundColor: (context) => { 
+                        const item = context.raw;
+                        const baseColors = {
+                            core: 'rgba(15, 118, 110, 0.7)', // teal-700
+                            special: 'rgba(59, 130, 246, 0.7)', // blue-500
+                            sub: 'rgba(107, 114, 128, 0.6)' // gray-500
+                        };
+
+                        if (!highlightedId) return baseColors[item.type];
+                        
+                        const highlightedItem = aiData[highlightedId];
+                        // Check if current item is the highlighted one, or a direct relation
+                        if (item.id === highlightedId || (highlightedItem.relations && highlightedItem.relations.includes(item.id))) { // Corrected ||
+                             return baseColors[item.type].replace('0.7', '1').replace('0.6','0.9');
+                        }
+                        // Check if current item has a relation to the highlighted one
+                        if(item.relations && item.relations.includes(highlightedId)){
+                             return baseColors[item.type].replace('0.7', '1').replace('0.6','0.9');
+                        }
+
+                        return baseColors[item.type].replace(/,\s?[\d\.]+\)/, ', 0.2)');
+                    },
+                    borderColor: (context) => {
+                        const item = context.raw;
+                        const baseColors = {
+                            core: 'rgba(13, 148, 136, 1)', // teal-600
+                            special: 'rgba(37, 99, 235, 1)', // blue-600
+                            sub: 'rgba(75, 85, 99, 1)' // gray-600
+                        };
+                         if (!highlightedId) return baseColors[item.type];
+                        
+                        const highlightedItem = aiData[highlightedId];
+                        if (item.id === highlightedId || (highlightedItem.relations && highlightedItem.relations.includes(item.id)) || (item.relations && item.relations.includes(highlightedId))) {
+                            return '#000';
+                        }
+                        
+                        return 'rgba(255, 255, 255, 0)';
+                    },
+                    borderWidth: 2,
+                }]; // Corrected: closing bracket for datasets array
+
+                return { datasets };
+            };
+            
+            const createAiTaxonomyChart = () => {
+                aiTaxonomyChart = new Chart(ctxAiTaxonomy, {
+                    type: 'bubble',
+                    data: createAiTaxonomyChartData(),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: false // Custom tooltip behavior
+                            },
+                            datalabels: {
+                                color: '#fff',
+                                anchor: 'end',
+                                align: 'center',
+                                font: {
+                                    weight: 'bold',
+                                    size: (context) => context.dataset.data[context.dataIndex].r > 15 ? 12 : 9,
+                                },
+                                formatter: (value) => value.name,
+                            }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        },
+                        onClick: (e, elements) => {
+                           if (elements.length > 0) {
+                                const element = elements[0];
+                                const data = aiTaxonomyChart.data.datasets[element.datasetIndex].data[element.index];
+                                updateAiTaxonomyChart(data.id);
+                                chartDetailInfo.innerHTML = `<p><strong class="text-teal-700">${data.name}:</strong> ${data.desc}</p>`;
+                            } else {
+                                updateAiTaxonomyChart(null);
+                                chartDetailInfo.innerHTML = `<p>Hover or click on a bubble to see details here.</p>`;
+                            }
+                        },
+                        onHover: (e, elements) => {
+                            e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                             if (elements.length > 0) {
+                                const element = elements[0];
+                                const data = aiTaxonomyChart.data.datasets[element.datasetIndex].data[element.index];
+                                // Only update info if custom tooltip behavior is active (i.e., default tooltip is disabled)
+                                if(!aiTaxonomyChart.config.options.plugins.tooltip.enabled) {
+                                  chartDetailInfo.innerHTML = `<p><strong class="text-teal-700">${data.name}:</strong> ${data.desc}</p>`;
+                                }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels],
+                });
+            };
+
+            const updateAiTaxonomyChart = (highlightedId) => {
+                aiTaxonomyChart.data = createAiTaxonomyChartData(highlightedId);
+                aiTaxonomyChart.update();
+            }
+
+            createAiTaxonomyChart(); // Initialize main AI taxonomy chart
+
+
+            // Image Resizing Guide's Interpolation Chart
+            const ctxInterpolation = document.getElementById('interpolationChart').getContext('2d');
+            
+            function initializeInterpolationChart() {
+                if (interpolationChartInstance) {
+                    interpolationChartInstance.destroy(); // Destroy previous instance if exists
+                }
+                interpolationChartInstance = new Chart(ctxInterpolation, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Nearest', 'Bilinear', 'Bicubic', 'Lanczos'],
+                        datasets: [{
+                            label: getTranslation('chart_quality_label'),
+                            data: [20, 50, 85, 95],
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }, {
+                            label: getTranslation('chart_speed_label'),
+                            data: [100, 80, 40, 20],
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%'
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateImageResizingTabContent(tabKey) {
                 const contentKeys = interpolationTabsData[tabKey];
                 if (!contentKeys) return;
 
@@ -772,149 +1242,95 @@
 
                 const prosHtml = contentKeys.pros_keys.map(key => {
                     const text = getTranslation(key);
-                    return text ? `<li class="flex items-start"><span class="text-green-500 mr-2 mt-1">✓</span><span class="text-slate-600">${text}</span></li>` : '';
+                    return text ? `<li class="ir-list-item"><span class="ir-list-icon-green">✓</span><span class="text-slate-600">${text}</span></li>` : '';
                 }).join('');
 
                 const consHtml = contentKeys.cons_keys.map(key => {
                     const text = getTranslation(key);
-                    return text ? `<li class="flex items-start"><span class="text-red-500 mr-2 mt-1">✗</span><span class="text-slate-600">${text}</span></li>` : '';
+                    return text ? `<li class="ir-list-item"><span class="ir-list-icon-red">✗</span><span class="text-slate-600">${text}</span></li>` : '';
                 }).join('');
 
-                tabContentEl.innerHTML = `
-                    <h4 class="text-xl font-semibold text-slate-800 mb-2">${title}</h4>
-                    <p class="text-slate-600 mb-4">${description}</p>
+                irTabContentEl.innerHTML = `
+                    <h4 class="ir-card-title">${title}</h4>
+                    <p class="ir-paragraph">${description}</p>
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
-                            <h5 class="font-semibold text-slate-700 mb-2" data-i18n="tab_key_characteristics">${getTranslation('tab_key_characteristics')}</h5>
+                            <h5 class="ir-strong mb-2" data-i18n="tab_key_characteristics">${getTranslation('tab_key_characteristics')}</h5>
                             <ul class="space-y-2">
                                 ${prosHtml}
                                 ${consHtml}
                             </ul>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-lg">
-                            <h5 class="font-semibold text-slate-700 mb-2" data-i18n="tab_primary_artifact">${getTranslation('tab_primary_artifact')}</h5>
-                            <p class="font-mono text-rose-600 bg-rose-50 px-2 py-1 rounded inline-block mb-4">${artifact}</p>
-                            <h5 class="font-semibold text-slate-700 mb-2" data-i18n="tab_best_for">${getTranslation('tab_best_for')}</h5>
+                            <h5 class="ir-strong mb-2" data-i18n="tab_primary_artifact">${getTranslation('tab_primary_artifact')}</h5>
+                            <p class="ir-mono-red">${artifact}</p>
+                            <h5 class="ir-strong mb-2" data-i18n="tab_best_for">${getTranslation('tab_best_for')}</h5>
                             <p class="text-slate-600">${bestFor}</p>
                         </div>
                     </div>
                 `;
             }
 
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabKey = button.dataset.tab;
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('tab-active');
-                        btn.classList.add('tab-inactive');
+            // Moved event listeners for irTabButtons inside a function that runs when the guide is displayed
+            function setupImageResizingTabListeners() {
+                // Re-select irTabButtons inside this function to ensure they exist
+                irTabButtons = irTabsContainer ? irTabsContainer.querySelectorAll('.ir-tab-button') : [];
+                irTabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const tabKey = button.dataset.tab;
+                        irTabButtons.forEach(btn => {
+                            btn.classList.remove('ir-tab-active');
+                            btn.classList.add('ir-tab-inactive');
+                        });
+                        button.classList.add('ir-tab-active');
+                        button.classList.remove('ir-tab-inactive');
+                        updateImageResizingTabContent(tabKey);
                     });
-                    button.classList.add('tab-active');
-                    button.classList.remove('tab-inactive');
-                    updateTabContent(tabKey);
                 });
+            }
+            
+            // Search functionality
+            const searchBar = document.getElementById('ai-search-bar');
+            const resultsCount = document.getElementById('search-results-count');
+            let originalTexts = new Map();
+
+            // Store original content
+            document.querySelectorAll('.searchable').forEach((el, i) => {
+                originalTexts.set(el, el.innerHTML);
             });
             
-            // Initialize chart
-            const ctx = document.getElementById('interpolationChart').getContext('2d');
-            interpolationChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Nearest', 'Bilinear', 'Bicubic', 'Lanczos'],
-                    datasets: [{
-                        label: 'Relative Quality',
-                        data: [20, 50, 85, 95],
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1
-                    }, {
-                        label: 'Relative Speed',
-                        data: [100, 80, 40, 20],
-                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
-                        borderColor: 'rgba(239, 68, 68, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                             ticks: {
-                                callback: function(value) {
-                                    return value + '%'
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        tooltip: {
-                             callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y + '%';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
+            const performSearch = () => {
+                const query = searchBar.value.trim().toLowerCase();
+                let count = 0;
+
+                // Reset all texts to original
+                 originalTexts.forEach((html, el) => {
+                    el.innerHTML = html;
+                });
+                
+                if (query.length < 2) {
+                    resultsCount.textContent = '';
+                    return;
                 }
-            });
-            
-            const mobileNav = document.getElementById('mobile-nav');
-            mobileNav.addEventListener('change', () => {
-                const targetId = mobileNav.value;
-                if (targetId) {
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }
-            });
 
-            const languageSelector = document.getElementById('language-selector');
-            languageSelector.addEventListener('change', (event) => {
-                currentLanguage = event.target.value;
-                applyTranslations(currentLanguage);
-            });
+                const regex = new RegExp(query, 'gi');
 
-            // Initial application of translations
-            applyTranslations(currentLanguage); // Apply default 'en' translations first
-            updateTabContent('bicubic'); // Set initial tab content
-            tabContainer.querySelector('[data-tab="bicubic"]').classList.add('tab-active');
-            tabContainer.querySelector('[data-tab="bicubic"]').classList.remove('tab-inactive');
-
-
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        observer.unobserve(entry.target);
+                document.querySelectorAll('.searchable').forEach(el => {
+                    const text = el.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        count++;
+                        el.innerHTML = el.innerHTML.replace(regex, `<span class="content-highlight">$&</span>`);
                     }
                 });
-            }, { threshold: 0.1 });
 
-            document.querySelectorAll('.section-fade-in').forEach(section => {
-                observer.observe(section);
-            });
+                if (count > 0) {
+                    resultsCount.textContent = `${count} result(s) found.`;
+                } else {
+                    resultsCount.textContent = 'No results found.';
+                }
+            };
             
-            // Initial animation for the first section
-            setTimeout(() => {
-                 document.querySelector('.section-fade-in').classList.add('visible');
-            }, 100);
+            searchBar.addEventListener('keyup', performSearch);
 
             // Three.js Background Setup
             let scene, camera, renderer, particles;
@@ -925,19 +1341,14 @@
                 const width = container.clientWidth;
                 const height = container.clientHeight;
 
-                // Scene
                 scene = new THREE.Scene();
-
-                // Camera
                 camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
                 camera.position.z = 100;
 
-                // Renderer
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: true for transparent background
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(width, height);
                 container.appendChild(renderer.domElement);
 
-                // Particles
                 const geometry = new THREE.BufferGeometry();
                 const positions = [];
                 const colors = [];
@@ -946,13 +1357,11 @@
                 const color3 = new THREE.Color(0xA9A9A9); // Dark Gray
 
                 for (let i = 0; i < particleCount; i++) {
-                    // Positions
                     const x = (Math.random() * 2 - 1) * 500;
                     const y = (Math.random() * 2 - 1) * 500;
                     const z = (Math.random() * 2 - 1) * 500;
                     positions.push(x, y, z);
 
-                    // Colors
                     const rand = Math.random();
                     if (rand < 0.33) {
                         colors.push(color1.r, color1.g, color1.b);
@@ -976,7 +1385,6 @@
                 particles = new THREE.Points(geometry, material);
                 scene.add(particles);
 
-                // Lights (optional, but can add subtle depth)
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
                 scene.add(ambientLight);
                 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -989,7 +1397,6 @@
             function animateThreeJS() {
                 requestAnimationFrame(animateThreeJS);
 
-                // Animate particles
                 if (particles) {
                     particles.rotation.y += 0.0005;
                     particles.rotation.x += 0.0001;
@@ -1011,12 +1418,18 @@
             window.onload = function () {
                 initThreeJS();
                 window.addEventListener('resize', onWindowResize);
-                // Ensure initial Chart.js setup and translations run
-                applyTranslations(currentLanguage);
-                updateTabContent('bicubic');
-                tabContainer.querySelector('[data-tab="bicubic"]').classList.add('tab-active');
-                tabContainer.querySelector('[data-tab="bicubic"]').classList.remove('tab-inactive');
+                applyTranslations(currentLanguage); // Apply default 'en' translations first
             };
+
+            // Language selector
+            const languageSelector = document.getElementById('language-selector');
+            if (languageSelector) { // Check if element exists before adding listener
+                languageSelector.addEventListener('change', (event) => {
+                    currentLanguage = event.target.value;
+                    applyTranslations(currentLanguage);
+                });
+            }
+            applyTranslations(currentLanguage); // Initial translation application
         });
     </script>
 </body>

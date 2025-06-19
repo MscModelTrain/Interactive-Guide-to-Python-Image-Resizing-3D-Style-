@@ -231,6 +231,21 @@
             padding-right: 0.75rem;
             border-radius: 9999px;
         }
+        /* Loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -246,13 +261,38 @@
                 An interactive guide to the core concepts, special topics, and intricate relationships within Artificial Intelligence. Start by searching or scroll to discover.
             </p>
             <div class="max-w-2xl mx-auto">
-                <div class="relative">
-                    <input type="text" id="ai-search-bar" placeholder="Ask Gemini about AI (e.g., 'What is Reinforcement Learning?')" class="w-full py-4 px-6 pr-12 rounded-full bg-slate-700 text-white placeholder-slate-400 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 transition">
+                <!-- Original on-page search bar -->
+                <div class="relative mb-8">
+                    <input type="text" id="ai-search-bar" placeholder="Search content on this page (e.g., 'Machine Learning')" class="w-full py-4 px-6 pr-12 rounded-full bg-slate-700 text-white placeholder-slate-400 border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/50 focus:border-teal-500 transition">
                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </span>
                 </div>
                 <div id="search-results-count" class="text-sm text-slate-400 mt-3 h-5"></div>
+
+                <!-- New Gemini AI Interaction Section -->
+                <div class="mt-12 p-6 bg-slate-700 rounded-xl shadow-lg border border-slate-600">
+                    <h2 class="text-2xl font-bold mb-4 text-center text-teal-300">Ask Gemini AI Anything!</h2>
+                    <p class="text-slate-300 text-center mb-6">Enter your question, and optionally upload an image for multimodal analysis. Gemini will generate a response.</p>
+                    <div class="flex flex-col gap-4">
+                        <input type="text" id="gemini-prompt-input" placeholder="Your question for Gemini (e.g., 'Explain deep learning' or 'What is in this image?')" class="w-full py-3 px-4 rounded-lg bg-slate-800 text-white placeholder-slate-500 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <input type="file" id="gemini-file-input" accept="image/*" class="hidden">
+                        <div class="flex items-center justify-center space-x-4">
+                            <button id="upload-file-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 ease-in-out shadow-md">
+                                Upload Image
+                            </button>
+                            <button id="ask-gemini-button" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 ease-in-out shadow-md">
+                                Ask Gemini
+                            </button>
+                            <div id="gemini-loader" class="loader"></div>
+                        </div>
+                        <img id="uploaded-image-preview" class="max-w-xs max-h-48 mx-auto rounded-lg mt-4 hidden object-contain" src="#" alt="Uploaded image preview">
+                    </div>
+                    <div id="gemini-response" class="bg-slate-800 p-4 mt-6 rounded-lg text-slate-200 text-left whitespace-pre-wrap min-h-[50px] shadow-inner">
+                        Gemini's response will appear here.
+                    </div>
+                </div>
+
             </div>
             <div class="flex justify-center mt-8">
                 <select id="language-selector" class="bg-slate-700 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
@@ -1289,7 +1329,7 @@
                 });
             }
             
-            // Search functionality
+            // Search functionality (for on-page content)
             const searchBar = document.getElementById('ai-search-bar');
             const resultsCount = document.getElementById('search-results-count');
             let originalTexts = new Map();
@@ -1331,6 +1371,7 @@
             };
             
             searchBar.addEventListener('keyup', performSearch);
+
 
             // Three.js Background Setup
             let scene, camera, renderer, particles;
@@ -1430,6 +1471,107 @@
                 });
             }
             applyTranslations(currentLanguage); // Initial translation application
+
+
+            // Gemini AI Integration for the new section
+            const geminiPromptInput = document.getElementById('gemini-prompt-input');
+            const geminiFileInput = document.getElementById('gemini-file-input');
+            const uploadFileButton = document.getElementById('upload-file-button');
+            const askGeminiButton = document.getElementById('ask-gemini-button');
+            const geminiResponseDiv = document.getElementById('gemini-response');
+            const geminiLoader = document.getElementById('gemini-loader');
+            const uploadedImagePreview = document.getElementById('uploaded-image-preview');
+
+            let currentImageData = null; // Stores the base64 encoded image data
+
+            // Trigger hidden file input when "Upload Image" button is clicked
+            uploadFileButton.addEventListener('click', () => {
+                geminiFileInput.click();
+            });
+
+            // Handle file selection and preview
+            geminiFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        currentImageData = e.target.result.split(',')[1]; // Get base64 part
+                        uploadedImagePreview.src = e.target.result;
+                        uploadedImagePreview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    currentImageData = null;
+                    uploadedImagePreview.classList.add('hidden');
+                    uploadedImagePreview.src = '#';
+                }
+            });
+
+            // Handle "Ask Gemini" button click
+            askGeminiButton.addEventListener('click', async () => {
+                const prompt = geminiPromptInput.value.trim();
+                if (!prompt && !currentImageData) {
+                    geminiResponseDiv.textContent = 'Please enter a prompt or upload an image.';
+                    return;
+                }
+
+                geminiLoader.style.display = 'block'; // Show loader
+                geminiResponseDiv.textContent = 'Thinking...'; // Clear previous response
+
+                try {
+                    const responseText = await callGeminiAPI(prompt, currentImageData);
+                    geminiResponseDiv.textContent = responseText;
+                } catch (error) {
+                    console.error('Error calling Gemini API:', error);
+                    geminiResponseDiv.textContent = 'Error: Could not get a response from Gemini. Please try again.';
+                } finally {
+                    geminiLoader.style.display = 'none'; // Hide loader
+                }
+            });
+
+            // Function to call the Gemini API
+            async function callGeminiAPI(prompt, imageData) {
+                // IMPORTANT: In a real application, your API key should NEVER be hardcoded here.
+                // It should be securely managed on a backend server.
+                const apiKey = ""; // Canvas will automatically provide an API key for gemini-2.0-flash
+
+                let chatHistory = [];
+                const parts = [{ text: prompt }];
+
+                if (imageData) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: "image/png", // Assuming PNG for simplicity, adjust as needed
+                            data: imageData
+                        }
+                    });
+                }
+                chatHistory.push({ role: "user", parts: parts });
+
+                const payload = { contents: chatHistory };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.error.message || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    return "No content generated by Gemini. The model might not have understood the request.";
+                }
+            }
         });
     </script>
 </body>

@@ -1,1 +1,1 @@
-# Interactive-Guide-to-Python-Image-Resizing-3D-Style-
+Explore the World of AI
